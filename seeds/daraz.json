@@ -1,0 +1,111 @@
+{
+  "tenant": { "name": "Daraz", "architecture_key": "customer_id", "timezone": "Asia/Karachi" },
+  "point_types": [
+    {
+      "slug": "coins", "name": "Daraz Coins", "is_primary": true, "spendable": true,
+      "description": "Earned at 1 coin per PKR spent and from games, check-ins and missions. 100 coins = PKR 1 off at checkout. Each batch expires 90 days after it is earned.",
+      "expiry_mode": "days", "expiry_value": 90,
+      "limits": [
+        { "direction": "debit", "period": "day", "max": 30000 },
+        { "direction": "debit", "period": "week", "max": 45000 }
+      ]
+    }
+  ],
+  "tiers": [
+    {
+      "slug": "standard", "name": "Standard", "is_active": true,
+      "description": "Rules for every customer.",
+      "rules": [
+        { "slug": "order_complete", "name": "Order completed", "order_delta": 1,
+          "description": "1 coin per PKR (spend is in paisa), at most 2,000 coins per order and 5 earning orders per day.",
+          "effects": [ { "point_type": "coins", "kind": "per_spend", "rate_points": 1, "rate_per": 100, "max": 2000 } ],
+          "rate_limit_max": 5, "rate_limit_window_seconds": 86400 },
+        { "slug": "order_cancelled", "name": "Order cancelled or refunded", "order_delta": -1,
+          "description": "Send the refunded amount as negative spend. Coins earned on the order are kept, per Daraz's terms." },
+        { "slug": "daily_check_in", "name": "Daily check-in",
+          "description": "7-day streak with a bigger reward on day 7; missing a day restarts it.",
+          "effects": [ { "point_type": "coins", "kind": "streak", "steps": [5, 5, 10, 10, 15, 15, 40] } ] },
+        { "slug": "candy_game_reward", "name": "Daraz Candy reward",
+          "description": "The game backend decides the prize and sends it as amount (at most 1,000).",
+          "effects": [ { "point_type": "coins", "kind": "input", "max": 1000 } ],
+          "rate_limit_max": 10, "rate_limit_window_seconds": 86400 },
+        { "slug": "shopping_mission", "name": "Shopping mission completed",
+          "effects": [ { "point_type": "coins", "kind": "fixed", "amount": 50 } ],
+          "rate_limit_max": 3, "rate_limit_window_seconds": 86400 },
+        { "slug": "redeem_at_checkout", "name": "Redeem coins at checkout",
+          "description": "Checkout sends the number of coins to burn; at most 25,000 per order. Daily and weekly caps apply on top.",
+          "effects": [ { "point_type": "coins", "kind": "input", "direction": "debit", "min": 100, "max": 25000 } ] }
+      ]
+    },
+    {
+      "slug": "club", "name": "Daraz Club", "is_active": true,
+      "description": "Daraz Club members: 1.5x coins on orders, bigger check-in rewards and higher redemption per order.",
+      "rules": [
+        { "slug": "order_complete", "name": "Order completed (Club)", "order_delta": 1,
+          "description": "1.5 coins per PKR, at most 3,000 coins per order.",
+          "effects": [ { "point_type": "coins", "kind": "per_spend", "rate_points": 3, "rate_per": 200, "max": 3000 } ],
+          "rate_limit_max": 5, "rate_limit_window_seconds": 86400 },
+        { "slug": "order_cancelled", "name": "Order cancelled or refunded", "order_delta": -1 },
+        { "slug": "daily_check_in", "name": "Daily check-in (Club)",
+          "description": "Same slug as the standard rule, so a streak carries over when a customer joins the Club.",
+          "effects": [ { "point_type": "coins", "kind": "streak", "steps": [10, 10, 20, 20, 30, 30, 80] } ] },
+        { "slug": "candy_game_reward", "name": "Daraz Candy reward",
+          "effects": [ { "point_type": "coins", "kind": "input", "max": 1000 } ],
+          "rate_limit_max": 10, "rate_limit_window_seconds": 86400 },
+        { "slug": "shopping_mission", "name": "Shopping mission completed (Club)",
+          "effects": [ { "point_type": "coins", "kind": "fixed", "amount": 75 } ],
+          "rate_limit_max": 3, "rate_limit_window_seconds": 86400 },
+        { "slug": "redeem_at_checkout", "name": "Redeem coins at checkout (Club)",
+          "description": "Members can burn up to 50,000 coins per order; the daily and weekly caps still apply.",
+          "effects": [ { "point_type": "coins", "kind": "input", "direction": "debit", "min": 100, "max": 50000 } ] }
+      ]
+    }
+  ],
+  "level_policy": { "basis": "rolling", "window_days": 180, "downgrade": true, "grace_days": 0, "min_tenure_days": 180 },
+  "levels": [
+    { "slug": "customer", "name": "Customer", "rank": 1, "tier": "standard",
+      "description": "Every Daraz customer from their first transaction." },
+    { "slug": "club", "name": "Daraz Club", "rank": 2, "tier": "club", "min_points": { "coins": 3500 },
+      "description": "3,500 coins collected in the last 180 days. Redeeming doesn't count against it. Membership lasts at least 180 days." }
+  ],
+  "demo": [
+    { "note": "cust_1001 checks in (streak day 1)",
+      "execute": { "customer_id": "cust_1001", "rule": "daily_check_in", "idempotency_key": "demo-daraz-1001-checkin-1" } },
+    { "note": "cust_1001 order #9001, PKR 1,250",
+      "execute": { "customer_id": "cust_1001", "rule": "order_complete", "spend": 125000, "idempotency_key": "daraz-order-9001" } },
+    { "note": "cust_1001 wins 200 coins in Daraz Candy",
+      "execute": { "customer_id": "cust_1001", "rule": "candy_game_reward", "amount": 200, "idempotency_key": "demo-daraz-1001-candy-1" } },
+    { "note": "cust_1001 completes a shopping mission",
+      "execute": { "customer_id": "cust_1001", "rule": "shopping_mission", "idempotency_key": "demo-daraz-1001-mission-1" } },
+    { "note": "cust_1001 burns 1,000 coins (PKR 10) at checkout",
+      "execute": { "customer_id": "cust_1001", "rule": "redeem_at_checkout", "amount": 1000, "idempotency_key": "daraz-checkout-77001" } },
+    { "note": "cust_1001 order #9001 cancelled: spend and order reversed",
+      "execute": { "customer_id": "cust_1001", "rule": "order_cancelled", "spend": -125000, "idempotency_key": "daraz-order-9001-cancel" } },
+    { "note": "cust_1002 order #9002, PKR 4,500 (capped at 2,000 coins)",
+      "execute": { "customer_id": "cust_1002", "rule": "order_complete", "spend": 450000, "idempotency_key": "daraz-order-9002" } },
+    { "note": "cust_1002 order #9003, PKR 1,800: 3,800 collected, joins Club",
+      "execute": { "customer_id": "cust_1002", "rule": "order_complete", "spend": 180000, "idempotency_key": "daraz-order-9003" } },
+    { "note": "cust_1002 order #9004, PKR 1,000 at the Club rate",
+      "execute": { "customer_id": "cust_1002", "rule": "order_complete", "spend": 100000, "idempotency_key": "daraz-order-9004" } },
+    { "note": "cust_1003 legacy wallet balance migrated in",
+      "adjust": { "entity_id": "cust_1003", "points": 60000, "reason": "Balance migrated from the legacy wallet", "idempotency_key": "demo-daraz-1003-migration" } },
+    { "note": "cust_1003 burns 25,000 coins at checkout",
+      "execute": { "customer_id": "cust_1003", "rule": "redeem_at_checkout", "amount": 25000, "idempotency_key": "daraz-checkout-77002" } },
+    { "note": "cust_1003 tries 10,000 more today (daily cap 30,000)", "expect": "point_limit_exceeded",
+      "execute": { "customer_id": "cust_1003", "rule": "redeem_at_checkout", "amount": 10000, "idempotency_key": "daraz-checkout-77003" } },
+    { "note": "cust_1003 tries 60,000 in one order (Club max 50,000)", "expect": "amount_out_of_range",
+      "execute": { "customer_id": "cust_1003", "rule": "redeem_at_checkout", "amount": 60000, "idempotency_key": "daraz-checkout-77004" } },
+    { "note": "cust_1004 order 1 of the day",
+      "execute": { "customer_id": "cust_1004", "rule": "order_complete", "spend": 20000, "idempotency_key": "daraz-order-9101" } },
+    { "note": "cust_1004 order 2 of the day",
+      "execute": { "customer_id": "cust_1004", "rule": "order_complete", "spend": 20000, "idempotency_key": "daraz-order-9102" } },
+    { "note": "cust_1004 order 3 of the day",
+      "execute": { "customer_id": "cust_1004", "rule": "order_complete", "spend": 20000, "idempotency_key": "daraz-order-9103" } },
+    { "note": "cust_1004 order 4 of the day",
+      "execute": { "customer_id": "cust_1004", "rule": "order_complete", "spend": 20000, "idempotency_key": "daraz-order-9104" } },
+    { "note": "cust_1004 order 5 of the day",
+      "execute": { "customer_id": "cust_1004", "rule": "order_complete", "spend": 20000, "idempotency_key": "daraz-order-9105" } },
+    { "note": "cust_1004 order 6 earns nothing (5 earning orders/day)", "expect": "rate_limit_exceeded",
+      "execute": { "customer_id": "cust_1004", "rule": "order_complete", "spend": 20000, "idempotency_key": "daraz-order-9106" } }
+  ]
+}

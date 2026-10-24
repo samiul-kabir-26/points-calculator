@@ -1,0 +1,6 @@
+/bin/
+.env
+*.test
+*.out
+# API keys written by cmd/seed -keys-file
+seeds/*.local.json

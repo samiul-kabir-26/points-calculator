@@ -1,0 +1,91 @@
+{
+  "level_policy": { "basis": "rolling", "window_days": 365, "downgrade": true, "grace_days": 30 },
+  "levels": [
+    { "slug": "basic", "name": "Basic", "rank": 1, "min_spend": 0, "tier": "basic", "description": "Every customer from their first transaction." },
+    { "slug": "silver", "name": "Silver", "rank": 2, "min_spend": 500000, "tier": "silver", "description": "5,000.00 spent in the last 12 months." },
+    { "slug": "gold", "name": "Gold", "rank": 3, "min_spend": 2000000, "tier": "gold", "description": "20,000.00 spent in the last 12 months." },
+    { "slug": "platinum", "name": "Platinum", "rank": 4, "min_spend": 5000000, "tier": "platinum", "description": "50,000.00 spent in the last 12 months." }
+  ],
+  "tiers": [
+    {
+      "slug": "basic",
+      "name": "Basic",
+      "description": "Free/entry tier for new or standard free users. Prevents point inflation with long cooldowns and strict caps.",
+      "is_active": true,
+      "rules": [
+        { "slug": "daily_login", "name": "Daily Login", "point_delta": 10, "cooldown_seconds": 86400, "rate_limit_max": 1, "rate_limit_window_seconds": 86400, "description": "Standard retention check-in" },
+        { "slug": "order_complete", "name": "Order Placed", "point_delta": 50, "cooldown_seconds": 0, "rate_limit_max": 5, "rate_limit_window_seconds": 86400, "description": "1x base shopping earn" },
+        { "slug": "product_review", "name": "Product Review", "point_delta": 20, "cooldown_seconds": 300, "rate_limit_max": 3, "rate_limit_window_seconds": 86400, "description": "UGC incentive, spam-capped" },
+        { "slug": "refer_friend", "name": "Referral Reward", "point_delta": 100, "cooldown_seconds": 0, "rate_limit_max": 5, "rate_limit_window_seconds": 604800, "description": "Growth incentive" },
+        { "slug": "redeem_discount_5", "name": "Redeem $5 Voucher", "point_delta": -250, "cooldown_seconds": 60, "rate_limit_max": 2, "rate_limit_window_seconds": 86400, "description": "Point burn" }
+      ]
+    },
+    {
+      "slug": "silver",
+      "name": "Silver",
+      "description": "Regular engagement tier for returning customers reaching early engagement thresholds (approx. 1.25x-1.5x points).",
+      "is_active": true,
+      "rules": [
+        { "slug": "daily_login", "name": "Daily Login", "point_delta": 15, "cooldown_seconds": 86400, "rate_limit_max": 1, "rate_limit_window_seconds": 86400, "description": "+50% over Basic" },
+        { "slug": "order_complete", "name": "Order Placed", "point_delta": 75, "cooldown_seconds": 0, "rate_limit_max": 10, "rate_limit_window_seconds": 86400, "description": "1.5x earn rate, higher daily cap" },
+        { "slug": "product_review", "name": "Product Review", "point_delta": 30, "cooldown_seconds": 300, "rate_limit_max": 5, "rate_limit_window_seconds": 86400, "description": "Boosted UGC reward" },
+        { "slug": "refer_friend", "name": "Referral Reward", "point_delta": 150, "cooldown_seconds": 0, "rate_limit_max": 10, "rate_limit_window_seconds": 604800, "description": "Higher referral payout" },
+        { "slug": "silver_anniversary", "name": "Tier Milestone Bonus", "point_delta": 200, "cooldown_seconds": 0, "rate_limit_max": 1, "rate_limit_window_seconds": 2592000, "description": "Retention milestone" },
+        { "slug": "redeem_discount_10", "name": "Redeem $10 Voucher", "point_delta": -450, "cooldown_seconds": 60, "rate_limit_max": 3, "rate_limit_window_seconds": 86400, "description": "Better redemption rate" }
+      ]
+    },
+    {
+      "slug": "gold",
+      "name": "Gold",
+      "description": "High engagement tier for dedicated brand advocates (approx. 1.75x-2x points, unlocked exclusive actions).",
+      "is_active": true,
+      "rules": [
+        { "slug": "daily_login", "name": "Daily Login", "point_delta": 25, "cooldown_seconds": 86400, "rate_limit_max": 1, "rate_limit_window_seconds": 86400, "description": "2.5x Basic" },
+        { "slug": "order_complete", "name": "Order Placed", "point_delta": 100, "cooldown_seconds": 0, "rate_limit_max": 20, "rate_limit_window_seconds": 86400, "description": "2x earn rate" },
+        { "slug": "photo_review", "name": "Photo/Video Review", "point_delta": 60, "cooldown_seconds": 300, "rate_limit_max": 5, "rate_limit_window_seconds": 86400, "description": "High-value media reviews" },
+        { "slug": "refer_friend", "name": "Referral Reward", "point_delta": 250, "cooldown_seconds": 0, "rate_limit_max": 15, "rate_limit_window_seconds": 604800, "description": "High-tier referral bonus" },
+        { "slug": "monthly_gold_bonus", "name": "Gold Monthly Perk", "point_delta": 300, "cooldown_seconds": 0, "rate_limit_max": 1, "rate_limit_window_seconds": 2592000, "description": "Recurring loyalty drop" },
+        { "slug": "redeem_free_shipping", "name": "Free Express Shipping", "point_delta": -300, "cooldown_seconds": 0, "rate_limit_max": 5, "rate_limit_window_seconds": 86400, "description": "Practical Gold perk" }
+      ]
+    },
+    {
+      "slug": "platinum",
+      "name": "Platinum",
+      "description": "Top loyalty VIP tier (approx. 2.5x-3x points, lower cooldowns, high redemption value, VIP privileges).",
+      "is_active": true,
+      "rules": [
+        { "slug": "daily_login", "name": "VIP Daily Login", "point_delta": 40, "cooldown_seconds": 86400, "rate_limit_max": 1, "rate_limit_window_seconds": 86400, "description": "4x Basic" },
+        { "slug": "order_complete", "name": "VIP Order Placed", "point_delta": 150, "cooldown_seconds": 0, "rate_limit_max": 0, "rate_limit_window_seconds": 0, "description": "3x earn rate, no cap" },
+        { "slug": "refer_friend", "name": "VIP Referral Reward", "point_delta": 400, "cooldown_seconds": 0, "rate_limit_max": 20, "rate_limit_window_seconds": 604800, "description": "Maximum referral payout" },
+        { "slug": "vip_event_attend", "name": "VIP Event Attendance", "point_delta": 500, "cooldown_seconds": 3600, "rate_limit_max": 2, "rate_limit_window_seconds": 2592000, "description": "Exclusive experiences" },
+        { "slug": "platinum_concierge", "name": "Concierge Service", "point_delta": -1000, "cooldown_seconds": 0, "rate_limit_max": 2, "rate_limit_window_seconds": 2592000, "description": "Elite burn channel" }
+      ]
+    },
+    {
+      "slug": "premium",
+      "name": "Premium",
+      "description": "Paid subscription tier, parallel to the standard progression (immediate high multipliers, monthly allowance, special perks).",
+      "is_active": true,
+      "rules": [
+        { "slug": "subscription_renewal", "name": "Monthly Subscription", "point_delta": 500, "cooldown_seconds": 0, "rate_limit_max": 1, "rate_limit_window_seconds": 2592000, "description": "Recurring subscription reward" },
+        { "slug": "daily_login", "name": "Premium Daily Login", "point_delta": 30, "cooldown_seconds": 86400, "rate_limit_max": 1, "rate_limit_window_seconds": 86400, "description": "3x Basic check-in" },
+        { "slug": "order_complete", "name": "Premium Order Earn", "point_delta": 120, "cooldown_seconds": 0, "rate_limit_max": 0, "rate_limit_window_seconds": 0, "description": "2.4x flat rate" },
+        { "slug": "instant_cashback", "name": "5% Instant Point Back", "point_delta": 80, "cooldown_seconds": 60, "rate_limit_max": 10, "rate_limit_window_seconds": 86400, "description": "Subscriber perk" },
+        { "slug": "priority_support_redeem", "name": "Priority Pass Burn", "point_delta": -150, "cooldown_seconds": 0, "rate_limit_max": 5, "rate_limit_window_seconds": 86400, "description": "Micro-burn" }
+      ]
+    },
+    {
+      "slug": "winter_bonus",
+      "name": "Winter Bonus",
+      "description": "Seasonal/promotional campaign tier with high-reward holiday actions. Toggle is_active on during winter/promos.",
+      "is_active": false,
+      "rules": [
+        { "slug": "advent_calendar_login", "name": "Winter Day Check-in", "point_delta": 50, "cooldown_seconds": 86400, "rate_limit_max": 1, "rate_limit_window_seconds": 86400, "description": "High holiday check-in bonus" },
+        { "slug": "winter_haul_bonus", "name": "Holiday Shopping Boost", "point_delta": 200, "cooldown_seconds": 0, "rate_limit_max": 5, "rate_limit_window_seconds": 86400, "description": "Stacks on top of regular order" },
+        { "slug": "gift_card_purchase", "name": "Holiday Gift Purchase", "point_delta": 150, "cooldown_seconds": 60, "rate_limit_max": 10, "rate_limit_window_seconds": 604800, "description": "Encourages gifting" },
+        { "slug": "winter_streak_7d", "name": "7-Day Winter Streak", "point_delta": 350, "cooldown_seconds": 604800, "rate_limit_max": 1, "rate_limit_window_seconds": 604800, "description": "Gamified holiday streak" },
+        { "slug": "redeem_holiday_box", "name": "Winter Mystery Box", "point_delta": -500, "cooldown_seconds": 0, "rate_limit_max": 3, "rate_limit_window_seconds": 86400, "description": "Festive point sink" }
+      ]
+    }
+  ]
+}

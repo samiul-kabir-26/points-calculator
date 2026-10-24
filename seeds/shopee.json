@@ -1,0 +1,357 @@
+{
+  "tenant": {
+    "name": "Shopee",
+    "architecture_key": "user_id",
+    "timezone": "Asia/Singapore"
+  },
+  "point_types": [
+    {
+      "slug": "coins",
+      "name": "Shopee Coins",
+      "is_primary": true,
+      "spendable": true,
+      "description": "100 coins = S$1 off. Coins expire at the end of the third month after they are earned, counting the earning month as month one (January coins expire after 31 March).",
+      "expiry_mode": "end_of_month",
+      "expiry_value": 3,
+      "limits": [
+        {
+          "direction": "debit",
+          "period": "day",
+          "max": 10000
+        }
+      ]
+    }
+  ],
+  "tiers": [
+    {
+      "slug": "shopee",
+      "name": "Shopee",
+      "is_active": true,
+      "description": "Earning and redemption rules shared by every Members Club tier. Tier benefits are vouchers that Shopee's backend issues by reading the user's level.",
+      "rules": [
+        {
+          "slug": "order_completed",
+          "name": "Order completed",
+          "order_delta": 1,
+          "description": "Send when the order is completed (not when placed): only completed orders count toward Members Club. 1 coin per S$1 (spend is in cents).",
+          "effects": [
+            {
+              "point_type": "coins",
+              "kind": "per_spend",
+              "rate_points": 1,
+              "rate_per": 100
+            }
+          ]
+        },
+        {
+          "slug": "order_refunded",
+          "name": "Order returned or refunded",
+          "order_delta": -1,
+          "description": "Send the refunded amount as negative spend. Refunded orders don't count toward Members Club."
+        },
+        {
+          "slug": "daily_check_in",
+          "name": "Daily check-in",
+          "description": "7-day check-in with a bigger reward on day 7.",
+          "effects": [
+            {
+              "point_type": "coins",
+              "kind": "streak",
+              "steps": [
+                5,
+                5,
+                10,
+                5,
+                5,
+                10,
+                25
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "shopee_games_reward",
+          "name": "Shopee Games prize",
+          "description": "The games backend decides the prize and sends it as amount.",
+          "effects": [
+            {
+              "point_type": "coins",
+              "kind": "input",
+              "max": 500
+            }
+          ],
+          "rate_limit_max": 20,
+          "rate_limit_window_seconds": 86400
+        },
+        {
+          "slug": "coins_cashback",
+          "name": "Coins cashback voucher",
+          "description": "Extra coins from a seller's coins-cashback voucher, credited when the order completes.",
+          "effects": [
+            {
+              "point_type": "coins",
+              "kind": "input",
+              "max": 5000
+            }
+          ],
+          "rate_limit_max": 10,
+          "rate_limit_window_seconds": 86400
+        },
+        {
+          "slug": "redeem_at_checkout",
+          "name": "Redeem coins at checkout",
+          "description": "Checkout works out how many coins the order may use (Shopee caps it as a share of the order value) and burns them here.",
+          "effects": [
+            {
+              "point_type": "coins",
+              "kind": "input",
+              "direction": "debit"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "level_policy": {
+    "basis": "calendar",
+    "period_months": 6,
+    "downgrade": true,
+    "grace_days": 0
+  },
+  "levels": [
+    {
+      "slug": "classic",
+      "name": "Classic",
+      "rank": 1,
+      "tier": "shopee",
+      "description": "Every Shopee user."
+    },
+    {
+      "slug": "silver",
+      "name": "Silver",
+      "rank": 2,
+      "tier": "shopee",
+      "min_orders": 15,
+      "min_spend": 25000,
+      "description": "15 completed orders and S$250 in a half-year (Jan-Jun or Jul-Dec); kept through the following half-year."
+    },
+    {
+      "slug": "gold",
+      "name": "Gold",
+      "rank": 3,
+      "tier": "shopee",
+      "min_orders": 25,
+      "min_spend": 100000,
+      "description": "25 completed orders and S$1,000 in a half-year."
+    },
+    {
+      "slug": "platinum",
+      "name": "Platinum",
+      "rank": 4,
+      "tier": "shopee",
+      "min_orders": 50,
+      "min_spend": 250000,
+      "description": "50 completed orders and S$2,500 in a half-year (illustrative thresholds)."
+    }
+  ],
+  "demo": [
+    {
+      "note": "sg_alice order #50001 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50001"
+      }
+    },
+    {
+      "note": "sg_alice order #50002 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50002"
+      }
+    },
+    {
+      "note": "sg_alice order #50003 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50003"
+      }
+    },
+    {
+      "note": "sg_alice order #50004 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50004"
+      }
+    },
+    {
+      "note": "sg_alice order #50005 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50005"
+      }
+    },
+    {
+      "note": "sg_alice order #50006 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50006"
+      }
+    },
+    {
+      "note": "sg_alice order #50007 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50007"
+      }
+    },
+    {
+      "note": "sg_alice order #50008 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50008"
+      }
+    },
+    {
+      "note": "sg_alice order #50009 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50009"
+      }
+    },
+    {
+      "note": "sg_alice order #50010 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50010"
+      }
+    },
+    {
+      "note": "sg_alice order #50011 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50011"
+      }
+    },
+    {
+      "note": "sg_alice order #50012 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50012"
+      }
+    },
+    {
+      "note": "sg_alice order #50013 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50013"
+      }
+    },
+    {
+      "note": "sg_alice order #50014 completed, S$20",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50014"
+      }
+    },
+    {
+      "note": "sg_alice order #50015 completed, S$20: 15 orders + S$300, now Silver",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "order_completed",
+        "spend": 2000,
+        "idempotency_key": "shopee-order-50015"
+      }
+    },
+    {
+      "note": "sg_alice checks in (streak day 1)",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "daily_check_in",
+        "idempotency_key": "demo-shopee-alice-checkin-1"
+      }
+    },
+    {
+      "note": "sg_alice burns 200 coins (S$2) at checkout",
+      "execute": {
+        "user_id": "sg_alice",
+        "rule": "redeem_at_checkout",
+        "amount": 200,
+        "idempotency_key": "shopee-checkout-88001"
+      }
+    },
+    {
+      "note": "sg_bob order #60001 completed, S$89.99",
+      "execute": {
+        "user_id": "sg_bob",
+        "rule": "order_completed",
+        "spend": 8999,
+        "idempotency_key": "shopee-order-60001"
+      }
+    },
+    {
+      "note": "sg_bob gets 300 coins cashback from a seller voucher",
+      "execute": {
+        "user_id": "sg_bob",
+        "rule": "coins_cashback",
+        "amount": 300,
+        "idempotency_key": "shopee-order-60001-cashback"
+      }
+    },
+    {
+      "note": "sg_bob wins 120 coins in Shopee Games",
+      "execute": {
+        "user_id": "sg_bob",
+        "rule": "shopee_games_reward",
+        "amount": 120,
+        "idempotency_key": "demo-shopee-bob-game-1"
+      }
+    },
+    {
+      "note": "sg_bob order #60001 refunded: no longer counts toward tiers",
+      "execute": {
+        "user_id": "sg_bob",
+        "rule": "order_refunded",
+        "spend": -8999,
+        "idempotency_key": "shopee-order-60001-refund"
+      }
+    },
+    {
+      "note": "sg_bob tries to burn 50,000 coins",
+      "expect": "insufficient_balance",
+      "execute": {
+        "user_id": "sg_bob",
+        "rule": "redeem_at_checkout",
+        "amount": 50000,
+        "idempotency_key": "shopee-checkout-88002"
+      }
+    }
+  ]
+}

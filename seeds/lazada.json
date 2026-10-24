@@ -1,0 +1,437 @@
+{
+  "tenant": {
+    "name": "Lazada",
+    "architecture_key": "buyer_id",
+    "timezone": "Asia/Kuala_Lumpur"
+  },
+  "point_types": [
+    {
+      "slug": "lazcoins",
+      "name": "LazCoins",
+      "is_primary": true,
+      "spendable": true,
+      "description": "100 LazCoins = RM1 off at checkout. Each LazCoin expires 6 months (180 days) after it is collected. No earning limit.",
+      "expiry_mode": "days",
+      "expiry_value": 180,
+      "limits": []
+    },
+    {
+      "slug": "engagement",
+      "name": "Engagement points",
+      "is_primary": false,
+      "spendable": false,
+      "description": "Non-spendable XP from orders, check-ins, reviews, missions and mega sales. Together with spend it decides the membership tier.",
+      "expiry_mode": "never",
+      "limits": []
+    }
+  ],
+  "tiers": [
+    {
+      "slug": "classic",
+      "name": "Classic",
+      "is_active": true,
+      "description": "Rules for Classic and Silver members.",
+      "rules": [
+        {
+          "slug": "order_complete",
+          "name": "Order completed",
+          "order_delta": 1,
+          "description": "1 LazCoin per RM1 (spend is in sen) plus 20 engagement.",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "per_spend",
+              "rate_points": 1,
+              "rate_per": 100
+            },
+            {
+              "point_type": "engagement",
+              "kind": "fixed",
+              "amount": 20
+            }
+          ]
+        },
+        {
+          "slug": "order_cancelled",
+          "name": "Order cancelled or refunded",
+          "order_delta": -1,
+          "description": "Send the refunded amount as negative spend."
+        },
+        {
+          "slug": "daily_check_in",
+          "name": "Daily check-in",
+          "description": "7-day LazCoins streak plus 5 engagement a day.",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "streak",
+              "steps": [
+                10,
+                20,
+                30,
+                50,
+                80,
+                120,
+                200
+              ]
+            },
+            {
+              "point_type": "engagement",
+              "kind": "fixed",
+              "amount": 5
+            }
+          ]
+        },
+        {
+          "slug": "review_with_media",
+          "name": "Review with photos or video",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "fixed",
+              "amount": 80
+            },
+            {
+              "point_type": "engagement",
+              "kind": "fixed",
+              "amount": 15
+            }
+          ],
+          "cooldown_seconds": 60,
+          "rate_limit_max": 5,
+          "rate_limit_window_seconds": 86400
+        },
+        {
+          "slug": "mission_complete",
+          "name": "In-app mission completed",
+          "description": "The mission service sends the LazCoins prize as amount.",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "input",
+              "max": 500
+            },
+            {
+              "point_type": "engagement",
+              "kind": "fixed",
+              "amount": 10
+            }
+          ],
+          "rate_limit_max": 10,
+          "rate_limit_window_seconds": 86400
+        },
+        {
+          "slug": "surprise_drop",
+          "name": "Surprise LazCoins drop",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "input",
+              "max": 100
+            }
+          ],
+          "rate_limit_max": 3,
+          "rate_limit_window_seconds": 86400
+        },
+        {
+          "slug": "redeem_at_checkout",
+          "name": "Redeem LazCoins at checkout",
+          "description": "Checkout applies the seller's LazCoins discount cap and burns the coins used.",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "input",
+              "direction": "debit"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "vip",
+      "name": "VIP",
+      "is_active": true,
+      "description": "Rules for Gold and Diamond members: 1.5x LazCoins on orders and bigger rewards.",
+      "rules": [
+        {
+          "slug": "order_complete",
+          "name": "Order completed (VIP)",
+          "order_delta": 1,
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "per_spend",
+              "rate_points": 3,
+              "rate_per": 200
+            },
+            {
+              "point_type": "engagement",
+              "kind": "fixed",
+              "amount": 30
+            }
+          ]
+        },
+        {
+          "slug": "order_cancelled",
+          "name": "Order cancelled or refunded",
+          "order_delta": -1
+        },
+        {
+          "slug": "daily_check_in",
+          "name": "Daily check-in (VIP)",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "streak",
+              "steps": [
+                20,
+                40,
+                60,
+                100,
+                160,
+                240,
+                400
+              ]
+            },
+            {
+              "point_type": "engagement",
+              "kind": "fixed",
+              "amount": 5
+            }
+          ]
+        },
+        {
+          "slug": "review_with_media",
+          "name": "Review with photos or video (VIP)",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "fixed",
+              "amount": 120
+            },
+            {
+              "point_type": "engagement",
+              "kind": "fixed",
+              "amount": 15
+            }
+          ],
+          "cooldown_seconds": 60,
+          "rate_limit_max": 5,
+          "rate_limit_window_seconds": 86400
+        },
+        {
+          "slug": "mission_complete",
+          "name": "In-app mission completed",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "input",
+              "max": 1000
+            },
+            {
+              "point_type": "engagement",
+              "kind": "fixed",
+              "amount": 10
+            }
+          ],
+          "rate_limit_max": 10,
+          "rate_limit_window_seconds": 86400
+        },
+        {
+          "slug": "surprise_drop",
+          "name": "Surprise LazCoins drop",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "input",
+              "max": 200
+            }
+          ],
+          "rate_limit_max": 3,
+          "rate_limit_window_seconds": 86400
+        },
+        {
+          "slug": "redeem_at_checkout",
+          "name": "Redeem LazCoins at checkout",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "input",
+              "direction": "debit"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "mega_sale",
+      "name": "Mega sale (11.11 / 12.12)",
+      "is_active": false,
+      "description": "Campaign rules. Switch on for the sale; the backend names this tier explicitly for sale orders.",
+      "rules": [
+        {
+          "slug": "sale_order",
+          "name": "Mega sale order",
+          "order_delta": 1,
+          "description": "2 LazCoins per RM1 plus 100 engagement for taking part in the sale.",
+          "effects": [
+            {
+              "point_type": "lazcoins",
+              "kind": "per_spend",
+              "rate_points": 2,
+              "rate_per": 100
+            },
+            {
+              "point_type": "engagement",
+              "kind": "fixed",
+              "amount": 100
+            }
+          ],
+          "rate_limit_max": 10,
+          "rate_limit_window_seconds": 86400
+        }
+      ]
+    }
+  ],
+  "level_policy": {
+    "basis": "rolling",
+    "window_days": 90,
+    "downgrade": true,
+    "grace_days": 30
+  },
+  "levels": [
+    {
+      "slug": "classic",
+      "name": "Classic",
+      "rank": 1,
+      "tier": "classic",
+      "description": "Every Lazada buyer."
+    },
+    {
+      "slug": "silver",
+      "name": "Silver",
+      "rank": 2,
+      "tier": "classic",
+      "min_spend": 50000,
+      "min_points": {
+        "engagement": 300
+      },
+      "description": "RM500 spend and 300 engagement in the last 90 days (illustrative thresholds)."
+    },
+    {
+      "slug": "gold",
+      "name": "Gold",
+      "rank": 3,
+      "tier": "vip",
+      "min_spend": 150000,
+      "min_points": {
+        "engagement": 800
+      },
+      "description": "RM1,500 spend and 800 engagement in the last 90 days."
+    },
+    {
+      "slug": "diamond",
+      "name": "Diamond",
+      "rank": 4,
+      "tier": "vip",
+      "min_spend": 400000,
+      "min_points": {
+        "engagement": 2000
+      },
+      "description": "RM4,000 spend and 2,000 engagement in the last 90 days."
+    }
+  ],
+  "demo": [
+    {
+      "note": "buyer_501 checks in (streak day 1)",
+      "execute": {
+        "buyer_id": "buyer_501",
+        "rule": "daily_check_in",
+        "idempotency_key": "demo-lazada-501-checkin-1"
+      }
+    },
+    {
+      "note": "buyer_501 posts a photo review",
+      "execute": {
+        "buyer_id": "buyer_501",
+        "rule": "review_with_media",
+        "idempotency_key": "lazada-review-30001"
+      }
+    },
+    {
+      "note": "buyer_501 order #70001, RM250",
+      "execute": {
+        "buyer_id": "buyer_501",
+        "rule": "order_complete",
+        "spend": 25000,
+        "idempotency_key": "lazada-order-70001"
+      }
+    },
+    {
+      "note": "buyer_501 order #70002, RM300",
+      "execute": {
+        "buyer_id": "buyer_501",
+        "rule": "order_complete",
+        "spend": 30000,
+        "idempotency_key": "lazada-order-70002"
+      }
+    },
+    {
+      "note": "buyer_501 completes a mission worth 200 LazCoins",
+      "execute": {
+        "buyer_id": "buyer_501",
+        "rule": "mission_complete",
+        "amount": 200,
+        "idempotency_key": "demo-lazada-501-mission-1"
+      }
+    },
+    {
+      "note": "buyer_501 engagement from LazLive watch time (nightly import)",
+      "adjust": {
+        "entity_id": "buyer_501",
+        "point_type": "engagement",
+        "points": 250,
+        "reason": "LazLive watch time, nightly import",
+        "idempotency_key": "lazada-lazlive-import-buyer_501-day1"
+      }
+    },
+    {
+      "note": "buyer_501 burns 300 LazCoins (RM3) at checkout",
+      "execute": {
+        "buyer_id": "buyer_501",
+        "rule": "redeem_at_checkout",
+        "amount": 300,
+        "idempotency_key": "lazada-checkout-99001"
+      }
+    },
+    {
+      "note": "buyer_502 sale order while 11.11 is switched off",
+      "expect": "tier_inactive",
+      "execute": {
+        "buyer_id": "buyer_502",
+        "tier": "mega_sale",
+        "rule": "sale_order",
+        "spend": 15000,
+        "idempotency_key": "lazada-order-71001"
+      }
+    },
+    {
+      "note": "buyer_502 catches a 50 LazCoins surprise drop",
+      "execute": {
+        "buyer_id": "buyer_502",
+        "rule": "surprise_drop",
+        "amount": 50,
+        "idempotency_key": "demo-lazada-502-drop-1"
+      }
+    },
+    {
+      "note": "buyer_502 order #71002, RM99.90",
+      "execute": {
+        "buyer_id": "buyer_502",
+        "rule": "order_complete",
+        "spend": 9990,
+        "idempotency_key": "lazada-order-71002"
+      }
+    }
+  ]
+}

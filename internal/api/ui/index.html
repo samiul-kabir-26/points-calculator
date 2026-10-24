@@ -1,0 +1,1231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Points Engine Admin</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1b1f24; --muted: #5d6673; --border: #dde1e6;
+    --accent: #2f6fde; --accent-text: #ffffff; --danger: #c93636; --ok: #1f8a4c; --warn: #b26b00;
+    --row-hover: #f0f3f7; --code-bg: #f2f4f7; --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111418; --panel: #1a1e24; --text: #e6e9ee; --muted: #9aa3ae; --border: #2c323a;
+      --accent: #5b8ff0; --accent-text: #0b0e12; --danger: #ef6b6b; --ok: #4cc283; --warn: #e3a54a;
+      --row-hover: #222831; --code-bg: #14181d; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  h1, h2, h3 { margin: 0; font-weight: 600; }
+  h1 { font-size: 16px; } h2 { font-size: 18px; } h3 { font-size: 15px; }
+  a { color: var(--accent); }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  .muted { color: var(--muted); }
+  .hidden { display: none !important; }
+
+  header { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; }
+  header .spacer { flex: 1; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+  .badge.on { color: var(--ok); border-color: currentColor; }
+  .badge.off { color: var(--muted); }
+  .badge.warn { color: var(--warn); border-color: currentColor; }
+
+  .layout { display: grid; grid-template-columns: 200px 1fr; min-height: calc(100vh - 53px); }
+  nav { border-right: 1px solid var(--border); padding: 12px 8px; background: var(--panel); }
+  nav button { display: block; width: 100%; text-align: left; padding: 8px 12px; margin-bottom: 2px; border: 0; border-radius: 6px; background: none; color: var(--text); font: inherit; cursor: pointer; }
+  nav button:hover { background: var(--row-hover); }
+  nav button.active { background: var(--accent); color: var(--accent-text); }
+  main { padding: 20px; min-width: 0; }
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; }
+    nav { display: flex; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: 8px; }
+    nav button { width: auto; white-space: nowrap; }
+    main { padding: 16px; }
+  }
+
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); }
+  .panel-head { display: flex; align-items: center; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .panel-head .spacer { flex: 1; }
+  .panel-body { padding: 16px; }
+  .stack > * + * { margin-top: 16px; }
+  .split { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 1000px) { .split { grid-template-columns: 1fr; } }
+
+  button.btn, .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font: inherit; cursor: pointer; white-space: nowrap; }
+  .btn:hover { background: var(--row-hover); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.danger { color: var(--danger); }
+  .btn.danger.solid { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .btn.small { padding: 3px 8px; font-size: 12.5px; }
+  .btn:disabled { opacity: .55; cursor: default; }
+
+  .field { display: block; margin-bottom: 12px; }
+  .field > span { display: block; font-weight: 500; margin-bottom: 4px; }
+  .field small { display: block; color: var(--muted); margin-top: 3px; }
+  input, select, textarea { width: 100%; padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  input[type=checkbox] { width: auto; }
+  .check { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 12px; }
+  .filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0 12px; align-items: end; }
+  @media (max-width: 520px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+  .effect-row { border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px 0; margin-bottom: 8px; }
+  .lines > div { white-space: nowrap; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { font-weight: 500; color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+  tbody tr:hover { background: var(--row-hover); }
+  tr.clickable { cursor: pointer; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pos { color: var(--ok); } .neg { color: var(--danger); }
+  .empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+  .actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+
+  .tier-list { list-style: none; margin: 0; padding: 6px; }
+  .tier-list li { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 6px; cursor: pointer; }
+  .tier-list li:hover { background: var(--row-hover); }
+  .tier-list li.selected { background: var(--row-hover); box-shadow: inset 3px 0 0 var(--accent); }
+  .tier-list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .switch { position: relative; width: 34px; height: 20px; flex: none; border-radius: 999px; border: 0; background: var(--border); cursor: pointer; padding: 0; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; }
+  .switch.on { background: var(--ok); }
+  .switch.on::after { transform: translateX(14px); }
+
+  pre.json { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow: auto; max-height: 360px; margin: 0; }
+  .secret { display: flex; gap: 8px; align-items: center; background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; word-break: break-all; }
+  .callout { border: 1px solid var(--border); border-left: 3px solid var(--warn); border-radius: 6px; padding: 10px 12px; background: var(--code-bg); }
+
+  .login { max-width: 440px; margin: 8vh auto; padding: 0 16px; }
+  .login .panel + .panel { margin-top: 16px; }
+  details > summary { cursor: pointer; font-weight: 500; }
+
+  dialog { border: 1px solid var(--border); border-radius: 10px; padding: 0; background: var(--panel); color: var(--text); width: min(520px, calc(100vw - 32px)); box-shadow: var(--shadow); }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog .panel-body { max-height: 70vh; overflow: auto; }
+  dialog footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+  .form-error { color: var(--danger); margin: 0 0 12px; }
+
+  #toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 50; max-width: calc(100vw - 32px); }
+  .toast { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--ok); border-radius: 6px; padding: 10px 14px; box-shadow: var(--shadow); max-width: 380px; }
+  .toast.error { border-left-color: var(--danger); }
+</style>
+</head>
+<body>
+
+<div id="login-view" class="login hidden">
+  <div class="panel">
+    <div class="panel-head"><h2>Points Engine Admin</h2></div>
+    <form class="panel-body" id="login-form">
+      <label class="field"><span>Tenant API key</span>
+        <input name="key" type="password" autocomplete="off" placeholder="pce_…" required>
+        <small>Stored only in this browser tab's session storage.</small>
+      </label>
+      <p class="form-error hidden" id="login-error"></p>
+      <button class="btn primary" type="submit">Connect</button>
+    </form>
+  </div>
+  <div class="panel">
+    <details class="panel-body">
+      <summary>Onboard a new tenant (platform operator)</summary>
+      <form id="tenant-form" style="margin-top:14px">
+        <label class="field"><span>Platform admin token</span><input name="token" type="password" autocomplete="off" required></label>
+        <label class="field"><span>Tenant name</span><input name="name" required></label>
+        <label class="field"><span>Architecture key</span><input name="architecture_key" placeholder="user_id"><small>Optional; can be set later.</small></label>
+        <p class="form-error hidden" id="tenant-error"></p>
+        <button class="btn" type="submit">Create tenant</button>
+      </form>
+    </details>
+  </div>
+</div>
+
+<div id="app-view" class="hidden">
+  <header>
+    <h1>Points Engine Admin</h1>
+    <span class="badge" id="arch-badge"></span>
+    <span class="spacer"></span>
+    <button class="btn small" id="logout">Disconnect</button>
+  </header>
+  <div class="layout">
+    <nav id="nav">
+      <button data-view="tiers">Tiers &amp; rules</button>
+      <button data-view="point-types">Point types</button>
+      <button data-view="levels">Levels</button>
+      <button data-view="profiles">Profiles</button>
+      <button data-view="logs">Ledger</button>
+      <button data-view="playground">Test &amp; adjust</button>
+      <button data-view="settings">Settings</button>
+    </nav>
+    <main id="main"></main>
+  </div>
+</div>
+
+<dialog id="dialog"></dialog>
+<div id="toasts"></div>
+
+<script>
+"use strict";
+
+// ---------- tiny DOM helper (all data goes through textContent, never innerHTML) ----------
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "class") el.className = v;
+    else if (k === "value") el.value = v;
+    else if (k === "checked") el.checked = !!v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of children.flat()) {
+    if (c == null || c === false) continue;
+    el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+const $ = (sel) => document.querySelector(sel);
+
+// ---------- API client ----------
+class ApiError extends Error {
+  constructor(status, code, message) { super(message); this.status = status; this.code = code; }
+}
+const store = {
+  get key() { try { return sessionStorage.getItem("pc_key") || ""; } catch { return mem.key; } },
+  set key(v) { try { v ? sessionStorage.setItem("pc_key", v) : sessionStorage.removeItem("pc_key"); } catch { mem.key = v; } },
+};
+const mem = { key: "" };
+
+async function api(method, path, body, token) {
+  const headers = { "Authorization": "Bearer " + (token || store.key) };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!res.ok) {
+    const e = (data && data.error) || {};
+    if (res.status === 401 && !token) { logout("Your API key is no longer valid."); }
+    throw new ApiError(res.status, e.code || "error", e.message || res.statusText);
+  }
+  return { status: res.status, data, headers: res.headers };
+}
+
+function qs(params) {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== "" && v != null) p.set(k, v);
+  const s = p.toString();
+  return s ? "?" + s : "";
+}
+
+// ---------- UI feedback ----------
+function toast(msg, isError) {
+  const t = h("div", { class: "toast" + (isError ? " error" : "") }, msg);
+  $("#toasts").append(t);
+  setTimeout(() => t.remove(), isError ? 6000 : 3000);
+}
+function errMsg(e) { return e instanceof ApiError ? `${e.message} (${e.code})` : String(e.message || e); }
+
+const fmtTime = (s) => s ? new Date(s).toLocaleString() : "—";
+const fmtNum = (n) => Number(n).toLocaleString();
+const signed = (n) => h("span", { class: n > 0 ? "pos" : "neg" }, (n > 0 ? "+" : "") + fmtNum(n));
+const statusBadge = (on) => h("span", { class: "badge " + (on ? "on" : "off") }, on ? "Active" : "Inactive");
+function fmtDuration(sec) {
+  if (!sec) return "—";
+  const units = [[86400, "d"], [3600, "h"], [60, "m"], [1, "s"]];
+  for (const [n, u] of units) if (sec % n === 0) return (sec / n) + u;
+  return sec + "s";
+}
+
+// ---------- modal form ----------
+// fields: [{name, label, type: text|number|textarea|checkbox|select|custom, value, help, required, options, placeholder}]
+// A custom field brings its own control element and a read() that returns its value (or throws).
+function openForm({ title, fields = [], submitLabel = "Save", danger = false, wide = false, intro, onSubmit }) {
+  const dlg = $("#dialog");
+  const errorEl = h("p", { class: "form-error hidden" });
+  const inputs = {};
+  const body = h("div", { class: "panel-body" }, intro ? h("p", { style: "margin-top:0" }, intro) : null, errorEl);
+  let row = null;
+  for (const f of fields) {
+    let control;
+    if (f.type === "checkbox") {
+      control = h("input", { type: "checkbox", name: f.name, checked: f.value });
+      inputs[f.name] = control;
+      body.append(h("label", { class: "check" }, control, f.label));
+      continue;
+    }
+    if (f.type === "custom") {
+      // A div, not a label: a label would forward clicks on its blank space to the first button inside.
+      body.append(h("div", { class: "field" }, h("span", {}, f.label), f.control, f.help ? h("small", {}, f.help) : null));
+      row = null;
+      continue;
+    }
+    if (f.type === "textarea") control = h("textarea", { name: f.name, rows: 3 }, f.value || "");
+    else if (f.type === "select") control = h("select", { name: f.name }, f.options.map((o) => h("option", { value: o.value, selected: o.value === f.value }, o.label)));
+    else control = h("input", { name: f.name, type: f.type || "text", value: f.value ?? "", required: f.required, placeholder: f.placeholder, step: f.type === "number" ? "1" : null, min: f.min });
+    inputs[f.name] = control;
+    const field = h("label", { class: "field" }, h("span", {}, f.label), control, f.help ? h("small", {}, f.help) : null);
+    if (f.half) {
+      if (!row) { row = h("div", { class: "grid2" }); body.append(row); }
+      row.append(field);
+      if (row.children.length === 2) row = null;
+    } else { row = null; body.append(field); }
+  }
+  const submit = h("button", { class: "btn " + (danger ? "danger solid" : "primary"), type: "submit" }, submitLabel);
+  const form = h("form", { method: "dialog" },
+    h("div", { class: "panel-head" }, h("h3", {}, title)),
+    body,
+    h("footer", {}, h("button", { class: "btn", type: "button", onclick: () => dlg.close() }, "Cancel"), submit));
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    submit.disabled = true;
+    errorEl.classList.add("hidden");
+    try {
+      const values = {};
+      for (const f of fields) {
+        const el = inputs[f.name];
+        if (f.type === "custom") values[f.name] = f.read();
+        else if (f.type === "checkbox") values[f.name] = el.checked;
+        else if (f.type === "number") values[f.name] = el.value === "" ? 0 : parseInt(el.value, 10);
+        else values[f.name] = el.value.trim();
+      }
+      await onSubmit(values);
+      dlg.close();
+    } catch (e) {
+      errorEl.textContent = errMsg(e);
+      errorEl.classList.remove("hidden");
+    } finally { submit.disabled = false; }
+  });
+  dlg.style.width = wide ? "min(720px, calc(100vw - 32px))" : "";
+  dlg.replaceChildren(form);
+  dlg.showModal();
+  const first = form.querySelector("input:not([type=checkbox]),textarea,select");
+  if (first) first.focus();
+}
+
+function confirmDanger(title, message, label, action) {
+  openForm({ title, intro: message, submitLabel: label, danger: true, onSubmit: action });
+}
+
+// ---------- point types & effects ----------
+const primarySlug = () => state.pointTypes.find((t) => t.is_primary)?.slug || "points";
+function ordinal(n) {
+  const s = ["th", "st", "nd", "rd"], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+function expirySummary(mode, value) {
+  if (mode === "days") return `${fmtNum(value)} day${value === 1 ? "" : "s"}`;
+  if (mode === "end_of_month") return value === 1 ? "end of month" : `end of ${ordinal(value)} month`;
+  return "never";
+}
+const expiryNote = (mode, value) => mode === "never" ? "never expires" : `expires ${mode === "days" ? "after" : "at"} ${expirySummary(mode, value)}`;
+const limitsSummary = (limits) => (limits || []).map((l) => `${l.direction === "credit" ? "earn" : "spend"} ≤ ${fmtNum(l.max)}/${l.period}`).join(" · ");
+// orderedBalances lists a {slug: value} map in point type order (primary first).
+const orderedBalances = (m) => {
+  const rank = (slug) => { const i = state.pointTypes.findIndex((t) => t.slug === slug); return i < 0 ? 1e9 : i; };
+  return Object.entries(m || {}).sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b));
+};
+// lineList renders ledger lines as "coins +10 (100 → 110)", one point type per line.
+const lineList = (lines) => (lines || []).length ? h("div", { class: "lines" }, lines.map((l) => h("div", {},
+  h("span", { class: "muted mono" }, l.point_type + " "), signed(l.delta),
+  h("span", { class: "muted" }, ` (${fmtNum(l.balance_before)} → `), h("strong", {}, fmtNum(l.balance_after)), h("span", { class: "muted" }, ")")))) : h("span", { class: "muted" }, "—");
+// balancesText renders {slug: {balance}} or {slug: number} compactly, e.g. "coins 1,250 · xp 30".
+const balancesText = (m) => orderedBalances(m).map(([slug, b]) => `${slug} ${fmtNum(b.balance ?? b)}`).join(" · ");
+
+function effectSummary(e) {
+  const pt = e.point_type || primarySlug();
+  const sign = e.direction === "debit" ? "-" : "+";
+  const notes = [];
+  let text;
+  if (e.kind === "per_spend") text = `${sign}${fmtNum(e.rate_points)} ${pt} per ${fmtNum(e.rate_per)} spend`;
+  else if (e.kind === "input") { text = `${sign}amount ${pt}`; if (e.min) notes.push(`min ${fmtNum(e.min)}`); }
+  else if (e.kind === "streak") { const st = e.steps || []; text = `${sign}${st.slice(0, 7).join("/")}${st.length > 7 ? "/…" : ""} ${pt} streak`; }
+  else text = `${sign}${fmtNum(e.amount)} ${pt}`;
+  if (e.max) notes.push(`max ${fmtNum(e.max)}`);
+  if (e.expiry_mode) notes.push(expiryNote(e.expiry_mode, e.expiry_value));
+  return notes.length ? `${text} (${notes.join(", ")})` : text;
+}
+const effectsSummary = (r) => (r.effects || []).map(effectSummary).join(" · ") || "no points";
+const hasKind = (r, kind) => (r.effects || []).some((e) => e.kind === kind);
+
+// expiryControl edits an expiry mode/value pair. With inherit, "" keeps the point type's default.
+function expiryControl(mode, value, inherit) {
+  const sel = h("select", {}, [...(inherit ? [["", "Point type default"]] : []), ["never", "Never"], ["days", "Days after earning"], ["end_of_month", "End of month"]]
+    .map(([v, l]) => h("option", { value: v, selected: (mode || "") === v }, l)));
+  const val = h("input", { type: "number", step: "1", min: 1, value: value ?? "", placeholder: "90" });
+  const hint = h("small", {});
+  const sync = () => {
+    val.classList.toggle("hidden", sel.value === "" || sel.value === "never");
+    hint.textContent = sel.value === "days" ? "Number of days, 1-3,650." :
+      sel.value === "end_of_month" ? "Months counting the month earned as 1 (1-120): 3 = end of the 3rd month." : "";
+  };
+  sel.addEventListener("change", sync);
+  sync();
+  return {
+    el: h("div", {}, h("div", { class: "grid2" }, sel, val), hint),
+    read: () => sel.value === "" ? {} : { expiry_mode: sel.value, expiry_value: sel.value === "never" ? null : parseInt(val.value || "0", 10) },
+  };
+}
+
+const effectKinds = [["fixed", "Fixed amount"], ["per_spend", "Per spend"], ["input", "Amount from request"], ["streak", "Daily streak"]];
+
+// effectsEditor edits a rule's effects as repeatable rows; read() returns the effects array.
+function effectsEditor(effects) {
+  const list = h("div");
+  const empty = h("p", { class: "muted", style: "margin:0 0 8px" }, "No effects: the rule only records spend and orders.");
+  const rows = [];
+  const num = (v) => v === "" ? undefined : parseInt(v, 10);
+  const field = (label, el, help) => h("label", { class: "field" }, h("span", {}, label), el, help ? h("small", {}, help) : null);
+  const sync = () => empty.classList.toggle("hidden", rows.length > 0);
+
+  function addRow(e = {}) {
+    const input = (value, placeholder) => h("input", { type: "number", step: "1", min: 0, value: value || "", placeholder });
+    const pt = h("select", {}, state.pointTypes.map((t) => h("option", { value: t.slug, selected: (e.point_type || primarySlug()) === t.slug }, t.name + (t.is_primary ? " (primary)" : ""))));
+    const kind = h("select", {}, effectKinds.map(([v, l]) => h("option", { value: v, selected: (e.kind || "fixed") === v }, l)));
+    const dir = h("select", {}, [["credit", "Credit (award)"], ["debit", "Debit (deduct)"]].map(([v, l]) => h("option", { value: v, selected: (e.direction || "credit") === v }, l)));
+    const amount = input(e.amount, "10"), ratePoints = input(e.rate_points, "1"), ratePer = input(e.rate_per, "100");
+    const min = input(e.min, "none"), max = input(e.max, "none");
+    const steps = h("input", { value: (e.steps || []).join(", "), placeholder: "5, 5, 10, 10, 15, 15, 30" });
+    const expiry = expiryControl(e.expiry_mode, e.expiry_value, true);
+    const maxHelp = h("small", {});
+    const f = {
+      amount: field("Amount", amount), ratePoints: field("Points", ratePoints), ratePer: field("Per spend of", ratePer, "Smallest currency unit."),
+      min: field("Min amount", min), max: h("label", { class: "field" }, h("span", {}, "Max per transaction"), max, maxHelp),
+      steps: field("Steps", steps, "Points for day 1, 2, 3… of a daily streak; repeats after the last step. A missed day restarts it."),
+      expiry: h("div", { class: "field" }, h("span", {}, "Expiry"), expiry.el),
+    };
+    const update = () => {
+      const k = kind.value;
+      // per_spend and streak only credit, and nothing may debit a non-spendable type.
+      const creditOnly = k === "per_spend" || k === "streak" || state.pointTypes.find((t) => t.slug === pt.value)?.spendable === false;
+      if (creditOnly) dir.value = "credit";
+      dir.disabled = creditOnly;
+      f.amount.classList.toggle("hidden", k !== "fixed");
+      f.ratePoints.classList.toggle("hidden", k !== "per_spend");
+      f.ratePer.classList.toggle("hidden", k !== "per_spend");
+      f.min.classList.toggle("hidden", k !== "input");
+      f.max.classList.toggle("hidden", k !== "per_spend" && k !== "input");
+      maxHelp.textContent = k === "input" ? "Larger amounts are rejected." : "Larger awards are capped.";
+      f.steps.classList.toggle("hidden", k !== "streak");
+      f.expiry.classList.toggle("hidden", dir.value !== "credit");
+    };
+    for (const el of [pt, kind, dir]) el.addEventListener("change", update);
+    update();
+
+    const row = {
+      pt,
+      el: h("div", { class: "effect-row" },
+        h("div", { class: "grid3" }, field("Point type", pt), field("Kind", kind), field("Direction", dir)),
+        h("div", { class: "grid3" }, f.amount, f.ratePoints, f.ratePer, f.min, f.max),
+        f.steps, f.expiry,
+        h("div", { class: "actions", style: "margin-bottom:10px" }, h("button", { class: "btn small danger", type: "button", onclick: () => {
+          rows.splice(rows.indexOf(row), 1); row.el.remove(); sync();
+        } }, "Remove"))),
+      read: () => {
+        const k = kind.value, out = { point_type: pt.value, kind: k, direction: dir.value };
+        if (k === "fixed") out.amount = num(amount.value);
+        if (k === "per_spend") { out.rate_points = num(ratePoints.value); out.rate_per = num(ratePer.value); }
+        if (k === "input") out.min = num(min.value);
+        if (k === "per_spend" || k === "input") out.max = num(max.value);
+        if (k === "streak") {
+          out.steps = steps.value.split(/[\s,]+/).filter(Boolean).map(Number);
+          if (!out.steps.length || out.steps.some((n) => !Number.isInteger(n) || n < 1)) throw new Error("Streak steps must be positive whole numbers separated by commas.");
+        }
+        if (dir.value === "credit") Object.assign(out, expiry.read());
+        return out;
+      },
+    };
+    rows.push(row);
+    list.append(row.el);
+    sync();
+  }
+
+  for (const e of effects) addRow(e);
+  sync();
+  // New rows default to the first point type no other row uses yet.
+  const addBtn = h("button", { class: "btn small", type: "button", onclick: () => {
+    const taken = new Set(rows.map((r) => r.pt.value));
+    addRow({ point_type: state.pointTypes.find((t) => !taken.has(t.slug))?.slug });
+  } }, "+ Add effect");
+  return { el: h("div", {}, list, empty, addBtn), read: () => rows.map((r) => r.read()) };
+}
+
+// ---------- integration snippets ----------
+const apiBase = () => location.origin;
+
+function codeBlock(label, code) {
+  const copy = h("button", { class: "btn small", type: "button", onclick: async () => {
+    try { await navigator.clipboard.writeText(code); copy.textContent = "Copied"; setTimeout(() => { copy.textContent = "Copy"; }, 1500); }
+    catch { copy.textContent = "Select & copy manually"; }
+  } }, "Copy");
+  return h("div", {},
+    h("div", { style: "display:flex;align-items:center;justify-content:space-between;margin-bottom:6px" }, h("strong", {}, label), copy),
+    h("pre", { class: "json" }, code));
+}
+
+function executeSnippets(tierSlug, r) {
+  const entityField = state.arch || "entity_id";
+  const payload = { [entityField]: "USER_ID_HERE", tier: tierSlug, rule: r.slug };
+  // per_spend effects need the order value; input effects need the amount to apply.
+  if (hasKind(r, "per_spend")) payload.spend = 125000;
+  if (hasKind(r, "input")) payload.amount = 500;
+  payload.idempotency_key = "UNIQUE_EVENT_ID";
+  const body = JSON.stringify(payload, null, 2);
+  const curl = `curl -X POST ${apiBase()}/engine/execute \\
+  -H "Authorization: Bearer $POINTS_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '${JSON.stringify(payload)}'`;
+  const js = `const res = await fetch("${apiBase()}/engine/execute", {
+  method: "POST",
+  headers: {
+    "Authorization": \`Bearer \${process.env.POINTS_API_KEY}\`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(${body.replace(/\n/g, "\n  ")}),
+});
+// 201 = applied, 200 = idempotent replay, 429 = cooldown / rate limit / streak already claimed (see Retry-After)
+const result = await res.json();`;
+  return [codeBlock("Endpoint", `POST ${apiBase()}/engine/execute`), codeBlock("cURL", curl), codeBlock("JavaScript (fetch)", js)];
+}
+
+function showRuleApi(tier, r) {
+  const dlg = $("#dialog");
+  const limits = [r.cooldown_seconds ? `cooldown ${fmtDuration(r.cooldown_seconds)}` : null,
+    r.rate_limit_max ? `max ${r.rate_limit_max} per ${fmtDuration(r.rate_limit_window_seconds)}` : null].filter(Boolean).join(", ") || "no limits";
+  dlg.style.width = "min(720px, calc(100vw - 32px))";
+  dlg.replaceChildren(h("div", {},
+    h("div", { class: "panel-head" }, h("h3", {}, `Trigger "${r.name}" from your app`)),
+    h("div", { class: "panel-body stack" },
+      h("p", { class: "muted", style: "margin:0" },
+        `Applies ${effectsSummary(r)}${r.order_delta ? `, ${r.order_delta > 0 ? "+" : ""}${r.order_delta} order${Math.abs(r.order_delta) === 1 ? "" : "s"}` : ""} per ${state.arch || "entity"}; ${limits}. `,
+        hasKind(r, "per_spend") ? "Send spend as the order value in your smallest currency unit. " : null,
+        hasKind(r, "input") ? "Send amount as the number of points to apply. " : null,
+        "Replace USER_ID_HERE with the user's ID, and use your order/event ID as the idempotency key so retries never double-credit. ",
+        "Call this from your backend; never expose the API key in a browser or mobile app."),
+      ...executeSnippets(tier.slug, r)),
+    h("footer", {}, h("button", { class: "btn primary", type: "button", onclick: () => { dlg.close(); dlg.style.width = ""; } }, "Done"))));
+  dlg.showModal();
+}
+
+function showSecret(title, secret, note) {
+  const dlg = $("#dialog");
+  const copy = h("button", { class: "btn small", type: "button", onclick: async () => {
+    try { await navigator.clipboard.writeText(secret); copy.textContent = "Copied"; } catch { copy.textContent = "Select & copy manually"; }
+  } }, "Copy");
+  dlg.replaceChildren(h("div", {},
+    h("div", { class: "panel-head" }, h("h3", {}, title)),
+    h("div", { class: "panel-body stack" },
+      h("div", { class: "callout" }, note || "This secret is shown only once. Store it somewhere safe."),
+      h("div", { class: "secret mono" }, h("span", { style: "flex:1" }, secret), copy)),
+    h("footer", {}, h("button", { class: "btn primary", type: "button", onclick: () => dlg.close() }, "Done"))));
+  dlg.showModal();
+}
+
+// ---------- app state & routing ----------
+const state = { arch: null, tiers: [], pointTypes: [], selectedTierId: null, view: "tiers", logFilters: {} };
+
+function logout(reason) {
+  store.key = "";
+  $("#app-view").classList.add("hidden");
+  $("#login-view").classList.remove("hidden");
+  if (reason) { const e = $("#login-error"); e.textContent = reason; e.classList.remove("hidden"); }
+}
+
+async function connect(key) {
+  const { data } = await api("GET", "/admin/architecture", undefined, key);
+  store.key = key;
+  state.arch = data.architecture_key;
+  $("#login-view").classList.add("hidden");
+  $("#app-view").classList.remove("hidden");
+  renderArch();
+  go(location.hash.slice(1) || "tiers");
+}
+
+function renderArch() {
+  const b = $("#arch-badge");
+  b.className = "badge " + (state.arch ? "" : "warn");
+  b.textContent = state.arch ? "Entity key: " + state.arch : "Entity key not set";
+  b.title = state.arch ? "" : "Set it in Settings before executing rules";
+}
+
+const views = { tiers: renderTiers, "point-types": renderPointTypes, levels: renderLevels, profiles: renderProfiles, logs: renderLogs, playground: renderPlayground, settings: renderSettings };
+
+function go(view) {
+  if (!views[view]) view = "tiers";
+  state.view = view;
+  if (location.hash.slice(1) !== view) history.replaceState(null, "", "#" + view);
+  for (const b of document.querySelectorAll("#nav button")) b.classList.toggle("active", b.dataset.view === view);
+  const main = $("#main");
+  main.replaceChildren(h("p", { class: "muted" }, "Loading…"));
+  views[view](main).catch((e) => main.replaceChildren(h("div", { class: "panel panel-body" }, "Failed to load: " + errMsg(e))));
+}
+
+async function loadTiers() {
+  const { data } = await api("GET", "/admin/tiers");
+  state.tiers = data.data;
+  return state.tiers;
+}
+
+async function loadPointTypes() {
+  const { data } = await api("GET", "/admin/point-types");
+  state.pointTypes = data.data;
+  return state.pointTypes;
+}
+
+// ---------- Tiers & rules ----------
+const tierFields = (t = {}) => [
+  { name: "name", label: "Name", value: t.name, required: true, placeholder: "Gold" },
+  { name: "slug", label: "Slug", value: t.slug, required: true, placeholder: "gold", help: "Used in execute calls. Lowercase letters, digits, _ and -." },
+  { name: "description", label: "Description", type: "textarea", value: t.description },
+  { name: "is_active", label: "Active", type: "checkbox", value: t.is_active ?? true },
+];
+
+function ruleFields(r = {}) {
+  const effects = effectsEditor(r.effects || [{ kind: "fixed", direction: "credit", amount: 10 }]);
+  return [
+    { name: "name", label: "Name", value: r.name, required: true, placeholder: "Daily login" },
+    { name: "slug", label: "Slug", value: r.slug, required: true, placeholder: "daily_login", help: "Used in execute calls; unique within the tier." },
+    { name: "description", label: "Description", type: "textarea", value: r.description },
+    { name: "effects", label: "Effects", type: "custom", control: effects.el, read: effects.read,
+      help: "What the rule does to each point type: at most one effect per point type, and one amount-from-request effect." },
+    { name: "order_delta", label: "Orders", type: "number", min: -1000, value: r.order_delta ?? 0,
+      help: "Added to the entity's order count: 1 for a completed order, -1 for a cancellation, 0 for none." },
+    { name: "cooldown_seconds", label: "Cooldown (seconds)", type: "number", min: 0, value: r.cooldown_seconds ?? 0, help: "Minimum gap between triggers per entity. 0 = none." },
+    { name: "rate_limit_max", label: "Max triggers", type: "number", min: 0, value: r.rate_limit_max ?? 0, half: true },
+    { name: "rate_limit_window_seconds", label: "Per window (seconds)", type: "number", min: 0, value: r.rate_limit_window_seconds ?? 0, half: true },
+    { name: "is_active", label: "Active", type: "checkbox", value: r.is_active ?? true },
+  ];
+}
+
+function toggle(on, onChange, label) {
+  return h("button", { class: "switch" + (on ? " on" : ""), type: "button", title: on ? "Deactivate" : "Activate", "aria-label": label, "aria-pressed": String(on),
+    onclick: (e) => { e.stopPropagation(); onChange(!on); } });
+}
+
+async function renderTiers(main) {
+  await Promise.all([loadTiers(), loadPointTypes()]);
+  if (!state.tiers.some((t) => t.id === state.selectedTierId)) state.selectedTierId = state.tiers[0]?.id || null;
+
+  const refresh = () => renderTiers(main).catch((e) => toast(errMsg(e), true));
+  const setTierStatus = async (t, on) => {
+    try { await api("PATCH", `/admin/tiers/${t.id}/status`, { is_active: on }); toast(`Tier "${t.name}" ${on ? "activated" : "deactivated"}`); refresh(); }
+    catch (e) { toast(errMsg(e), true); }
+  };
+
+  const list = h("ul", { class: "tier-list" }, state.tiers.map((t) =>
+    h("li", { class: t.id === state.selectedTierId ? "selected" : "", onclick: () => { state.selectedTierId = t.id; refresh(); } },
+      h("span", { class: "name" }, t.name, " ", h("span", { class: "muted mono" }, t.slug)),
+      toggle(t.is_active, (on) => setTierStatus(t, on), "Toggle tier " + t.name))));
+
+  const tiersPanel = h("div", { class: "panel" },
+    h("div", { class: "panel-head" }, h("h3", {}, "Tiers"), h("span", { class: "spacer" }),
+      h("button", { class: "btn small primary", onclick: () => openForm({ title: "New tier", fields: tierFields(), submitLabel: "Create",
+        onSubmit: async (v) => { const { data } = await api("POST", "/admin/tiers", v); state.selectedTierId = data.id; toast("Tier created"); refresh(); } }) }, "+ New tier")),
+    state.tiers.length ? list : h("div", { class: "empty" }, "No tiers yet. Create one such as Basic, Gold or Platinum."));
+
+  const layout = h("div", { class: "split" }, tiersPanel);
+  const tier = state.tiers.find((t) => t.id === state.selectedTierId);
+  layout.append(tier ? await rulesPanel(tier, refresh) : h("div", { class: "panel" }, h("div", { class: "empty" }, "Select or create a tier to manage its rules.")));
+  main.replaceChildren(layout);
+}
+
+async function rulesPanel(tier, refresh) {
+  const { data } = await api("GET", `/admin/tiers/${tier.id}/rules`);
+  const rules = data.data;
+  const base = `/admin/tiers/${tier.id}/rules`;
+
+  const setRuleStatus = async (r, on) => {
+    try { await api("PATCH", `${base}/${r.id}/status`, { is_active: on }); toast(`Rule "${r.name}" ${on ? "enabled" : "disabled"}`); refresh(); }
+    catch (e) { toast(errMsg(e), true); }
+  };
+  const limitText = (r) => r.rate_limit_max ? `${r.rate_limit_max} per ${fmtDuration(r.rate_limit_window_seconds)}` : "—";
+
+  const table = h("div", { class: "table-wrap" }, h("table", {},
+    h("thead", {}, h("tr", {}, h("th", {}, "On"), h("th", {}, "Rule"), h("th", {}, "Effects"), h("th", { class: "num" }, "Orders"), h("th", {}, "Cooldown"), h("th", {}, "Throttle"), h("th", {}))),
+    h("tbody", {}, rules.map((r) => h("tr", {},
+      h("td", {}, toggle(r.is_active, (on) => setRuleStatus(r, on), "Toggle rule " + r.name)),
+      h("td", {}, h("div", {}, r.name), h("div", { class: "muted mono" }, r.slug)),
+      h("td", {}, effectsSummary(r)),
+      h("td", { class: "num" }, r.order_delta ? signed(r.order_delta) : h("span", { class: "muted" }, "—")),
+      h("td", {}, fmtDuration(r.cooldown_seconds)),
+      h("td", {}, limitText(r)),
+      h("td", {}, h("div", { class: "actions" },
+        h("button", { class: "btn small", title: "How to call this rule from your app", onclick: () => showRuleApi(tier, r) }, "API"),
+        h("button", { class: "btn small", onclick: () => openForm({ title: `Edit rule "${r.name}"`, fields: ruleFields(r), wide: true,
+          onSubmit: async (v) => { await api("PATCH", `${base}/${r.id}`, v); toast("Rule saved"); refresh(); } }) }, "Edit"),
+        h("button", { class: "btn small danger", onclick: () => confirmDanger("Delete rule", `Delete rule "${r.name}"? Past ledger entries are kept.`, "Delete",
+          async () => { await api("DELETE", `${base}/${r.id}`); toast("Rule deleted"); refresh(); }) }, "Delete"))))))));
+
+  return h("div", { class: "panel" },
+    h("div", { class: "panel-head" },
+      h("h3", {}, tier.name), h("span", { class: "muted mono" }, tier.slug), statusBadge(tier.is_active),
+      h("span", { class: "spacer" }),
+      h("button", { class: "btn small", onclick: () => openForm({ title: `Edit tier "${tier.name}"`, fields: tierFields(tier),
+        onSubmit: async (v) => { await api("PATCH", `/admin/tiers/${tier.id}`, v); toast("Tier saved"); refresh(); } }) }, "Edit tier"),
+      h("button", { class: "btn small danger", onclick: () => confirmDanger("Delete tier", `Delete tier "${tier.name}" and all ${rules.length} of its rules? Ledger history is kept.`, "Delete tier",
+        async () => { await api("DELETE", `/admin/tiers/${tier.id}`); state.selectedTierId = null; toast("Tier deleted"); refresh(); }) }, "Delete tier"),
+      h("button", { class: "btn small primary", onclick: () => openForm({ title: `New rule in "${tier.name}"`, fields: ruleFields(), submitLabel: "Create", wide: true,
+        onSubmit: async (v) => { await api("POST", base, v); toast("Rule created"); refresh(); } }) }, "+ New rule")),
+    tier.description ? h("div", { class: "panel-body muted", style: "padding-bottom:0" }, tier.description) : null,
+    rules.length ? table : h("div", { class: "empty" }, "No rules in this tier yet."));
+}
+
+// ---------- Point types ----------
+const limitSlots = [["credit", "day"], ["debit", "day"], ["credit", "week"], ["debit", "week"], ["credit", "month"], ["debit", "month"]];
+const limitsIntro = "Limits cap how much of this type one entity can earn or spend through rules per day, ISO week or month in your time zone. Leave them blank for no limit.";
+
+function pointTypeFields(t = {}) {
+  const expiry = expiryControl(t.expiry_mode || "never", t.expiry_value, false);
+  const limit = (d, p) => (t.limits || []).find((l) => l.direction === d && l.period === p)?.max;
+  return [
+    { name: "name", label: "Name", value: t.name, required: true, placeholder: "Coins" },
+    { name: "slug", label: "Slug", value: t.slug, required: true, placeholder: "coins", help: "Used in rule effects, adjustments, balances and level requirements." },
+    { name: "description", label: "Description", type: "textarea", value: t.description },
+    { name: "expiry", label: "Earned points expire", type: "custom", control: expiry.el, read: expiry.read,
+      help: "Default for credits; a rule effect can override it. Changes apply to points earned afterwards." },
+    ...limitSlots.map(([d, p]) => ({ name: `limit_${d}_${p}`, label: `Max ${d === "credit" ? "earned" : "spent"} per ${p}`, type: "number", min: 0,
+      value: limit(d, p) ?? "", placeholder: "no limit", half: true })),
+    { name: "spendable", label: "Spendable (untick for XP-style types that rules can only award)", type: "checkbox", value: t.spendable ?? true },
+    t.is_primary ? null : { name: "is_primary", label: "Primary (legacy balance fields and point_delta refer to it)", type: "checkbox", value: false },
+  ].filter(Boolean);
+}
+function pointTypeBody(v) {
+  const body = { name: v.name, slug: v.slug, description: v.description, spendable: v.spendable, ...v.expiry, limits: [] };
+  if (v.is_primary) body.is_primary = true;
+  for (const [d, p] of limitSlots) if (v[`limit_${d}_${p}`] > 0) body.limits.push({ direction: d, period: p, max: v[`limit_${d}_${p}`] });
+  return body;
+}
+
+async function renderPointTypes(main) {
+  await loadPointTypes();
+  const refresh = () => renderPointTypes(main).catch((e) => toast(errMsg(e), true));
+  const makePrimary = async (t) => {
+    try { await api("PATCH", `/admin/point-types/${t.id}`, { is_primary: true }); toast(`"${t.name}" is now the primary point type`); refresh(); }
+    catch (e) { toast(errMsg(e), true); }
+  };
+
+  const table = h("div", { class: "table-wrap" }, h("table", {},
+    h("thead", {}, h("tr", {}, h("th", {}, "Point type"), h("th", {}, "Spendable"), h("th", {}, "Expiry"), h("th", {}, "Limits"), h("th", {}))),
+    h("tbody", {}, state.pointTypes.map((t) => h("tr", {},
+      h("td", {}, h("div", {}, t.name, " ", t.is_primary ? h("span", { class: "badge on" }, "Primary") : null), h("div", { class: "muted mono" }, t.slug)),
+      h("td", {}, t.spendable ? "Yes" : h("span", { class: "muted", title: "Rules can only award it" }, "No, award only")),
+      h("td", {}, expirySummary(t.expiry_mode, t.expiry_value)),
+      h("td", {}, limitsSummary(t.limits) || h("span", { class: "muted" }, "—")),
+      h("td", {}, h("div", { class: "actions" },
+        t.is_primary ? null : h("button", { class: "btn small", title: "Legacy balance fields and point_delta refer to the primary type", onclick: () => makePrimary(t) }, "Make primary"),
+        h("button", { class: "btn small", onclick: () => openForm({ title: `Edit point type "${t.name}"`, fields: pointTypeFields(t), intro: limitsIntro,
+          onSubmit: async (v) => { await api("PATCH", `/admin/point-types/${t.id}`, pointTypeBody(v)); toast("Point type saved"); refresh(); } }) }, "Edit"),
+        h("button", { class: "btn small danger", disabled: t.is_primary, title: t.is_primary ? "Make another type primary first" : null,
+          onclick: () => confirmDanger("Delete point type", `Delete point type "${t.name}"? This only works while no balances, rules, levels or ledger entries use it.`, "Delete",
+            async () => { await api("DELETE", `/admin/point-types/${t.id}`); toast("Point type deleted"); refresh(); }) }, "Delete"))))))));
+
+  main.replaceChildren(h("div", { class: "panel" },
+    h("div", { class: "panel-head" }, h("h3", {}, "Point types"), h("span", { class: "spacer" }),
+      h("button", { class: "btn small primary", onclick: () => openForm({ title: "New point type", fields: pointTypeFields(), submitLabel: "Create", intro: limitsIntro,
+        onSubmit: async (v) => { await api("POST", "/admin/point-types", pointTypeBody(v)); toast("Point type created"); refresh(); } }) }, "+ New point type")),
+    h("div", { class: "panel-body muted", style: "padding-bottom:0" },
+      "The currencies entities hold, such as coins to redeem or XP that only accumulates. Rules award or deduct them through effects; the primary type is the one the legacy balance and point_delta fields refer to."),
+    table));
+}
+
+// ---------- Levels ----------
+const levelFields = (l = {}) => [
+  { name: "name", label: "Name", value: l.name, required: true, placeholder: "Gold" },
+  { name: "slug", label: "Slug", value: l.slug, required: true, placeholder: "gold", help: "Lowercase letters, digits, _ and -." },
+  { name: "rank", label: "Rank", type: "number", min: 0, value: l.rank, required: true, half: true, help: "Higher is better; unique per level." },
+  { name: "min_spend", label: "Min qualifying spend", type: "number", min: 0, value: l.min_spend ?? 0, half: true,
+    help: "Smallest currency unit (500000 = 5,000.00)." },
+  { name: "min_orders", label: "Min qualifying orders", type: "number", min: 0, value: l.min_orders ?? 0, half: true },
+  // One minimum per point type, counting points earned (not the current balance); 0 = no requirement.
+  ...state.pointTypes.map((t) => ({ name: "min_points." + t.slug, label: `Min ${t.name} earned`, type: "number", min: 0, value: l.min_points?.[t.slug] ?? 0, half: true })),
+  { name: "tier_id", label: "Linked tier", type: "select", value: l.tier_id || "",
+    options: [{ value: "", label: "None" }, ...state.tiers.map((t) => ({ value: t.id, label: t.name }))],
+    help: "Optional. Its rules apply when an execute call leaves out the tier." },
+  { name: "description", label: "Description", type: "textarea", value: l.description },
+  { name: "is_active", label: "Active", type: "checkbox", value: l.is_active ?? true },
+];
+function levelBody(v) {
+  const body = { min_points: {} };
+  for (const [k, n] of Object.entries(v)) {
+    if (k.startsWith("min_points.")) { if (n > 0) body.min_points[k.slice("min_points.".length)] = n; }
+    else body[k] = n;
+  }
+  body.tier_id = v.tier_id || null;
+  return body;
+}
+const levelRequirements = (l) => [
+  l.min_spend ? `spend ${fmtNum(l.min_spend)}` : null,
+  l.min_orders ? `${fmtNum(l.min_orders)} order${l.min_orders === 1 ? "" : "s"}` : null,
+  ...Object.entries(l.min_points || {}).map(([slug, n]) => `${fmtNum(n)} ${slug} earned`),
+].filter(Boolean).join(" · ");
+
+const periodLabel = (months) => months === 12 ? "calendar-year" : `${months}-month`;
+function policySummary(p) {
+  const what = "spend, orders and points earned";
+  const basis = p.basis === "rolling" ? `${what} in the last ${p.window_days} days` :
+    p.basis === "calendar" ? `${what} in each ${periodLabel(p.period_months)} period counted from 1 January. A level reached in one period is kept through the next` :
+    `lifetime ${what}`;
+  const tenure = p.min_tenure_days ? `, but never within ${p.min_tenure_days} days of reaching it` : "";
+  const down = p.downgrade ? `Entities drop a level ${p.grace_days ? `${p.grace_days} days after` : "as soon as"} they stop qualifying${tenure}.` : "Levels are never lost.";
+  return `Levels are based on ${basis}. ${down}`;
+}
+
+async function renderLevels(main) {
+  const [, , { data: levelsData }, { data: policy }] = await Promise.all([loadTiers(), loadPointTypes(), api("GET", "/admin/levels"), api("GET", "/admin/level-policy")]);
+  const levels = levelsData.data;
+  const nextRank = Math.max(0, ...levels.map((l) => l.rank)) + 1;
+  const refresh = () => renderLevels(main).catch((e) => toast(errMsg(e), true));
+  const tierName = (id) => state.tiers.find((t) => t.id === id)?.name;
+
+  const setLevelStatus = async (l, on) => {
+    try { await api("PATCH", `/admin/levels/${l.id}/status`, { is_active: on }); toast(`Level "${l.name}" ${on ? "activated" : "deactivated"}`); refresh(); }
+    catch (e) { toast(errMsg(e), true); }
+  };
+  const reevaluate = async (btn) => {
+    btn.disabled = true;
+    try { const { data } = await api("POST", "/admin/levels/reevaluate"); toast(`Re-evaluated ${fmtNum(data.evaluated)} profiles, ${fmtNum(data.changed)} changed level`); }
+    catch (e) { toast(errMsg(e), true); }
+    finally { btn.disabled = false; }
+  };
+
+  // Policy form
+  const basis = h("select", {}, [["lifetime", "Lifetime"], ["rolling", "Rolling window"], ["calendar", "Calendar periods"]].map(([v, l]) => h("option", { value: v, selected: policy.basis === v }, l)));
+  const windowDays = h("input", { type: "number", step: "1", min: 1, max: 3650, value: policy.window_days ?? 365 });
+  const windowField = h("label", { class: "field" }, h("span", {}, "Window (days)"), windowDays, h("small", {}, "Only activity from this many recent days counts."));
+  const periodMonths = h("select", {}, [[1, "Monthly"], [2, "Every 2 months"], [3, "Quarterly"], [4, "Every 4 months"], [6, "Half-yearly"], [12, "Yearly"]]
+    .map(([v, l]) => h("option", { value: v, selected: (policy.period_months ?? 12) === v }, l)));
+  const periodField = h("label", { class: "field" }, h("span", {}, "Period"), periodMonths,
+    h("small", {}, "Periods start on 1 January in your time zone. A level reached in one period is kept through the next."));
+  const downgrade = h("input", { type: "checkbox", checked: policy.downgrade });
+  const graceDays = h("input", { type: "number", step: "1", min: 0, max: 3650, value: policy.grace_days });
+  const graceField = h("label", { class: "field" }, h("span", {}, "Grace period (days)"), graceDays, h("small", {}, "How long an entity keeps its level after it stops qualifying."));
+  const tenureDays = h("input", { type: "number", step: "1", min: 0, max: 3650, value: policy.min_tenure_days ?? 0 });
+  const tenureField = h("label", { class: "field" }, h("span", {}, "Minimum tenure (days)"), tenureDays, h("small", {}, "A level is never lost sooner than this after it was reached."));
+  const sync = () => {
+    windowField.classList.toggle("hidden", basis.value !== "rolling");
+    periodField.classList.toggle("hidden", basis.value !== "calendar");
+    graceField.classList.toggle("hidden", !downgrade.checked);
+    tenureField.classList.toggle("hidden", !downgrade.checked);
+  };
+  basis.addEventListener("change", sync);
+  downgrade.addEventListener("change", sync);
+  sync();
+  const policyForm = h("form", { class: "panel-body", onsubmit: async (e) => {
+    e.preventDefault();
+    const body = { basis: basis.value, downgrade: downgrade.checked, grace_days: parseInt(graceDays.value || "0", 10), min_tenure_days: parseInt(tenureDays.value || "0", 10) };
+    if (basis.value === "rolling") body.window_days = parseInt(windowDays.value || "0", 10);
+    if (basis.value === "calendar") body.period_months = parseInt(periodMonths.value, 10);
+    try { await api("PATCH", "/admin/level-policy", body); toast("Level policy saved. Use Re-evaluate to apply it to everyone now."); refresh(); }
+    catch (err) { toast(errMsg(err), true); }
+  } },
+    h("p", { class: "muted", style: "margin-top:0" }, policySummary(policy)),
+    h("label", { class: "field" }, h("span", {}, "Qualifying activity"), basis),
+    windowField,
+    periodField,
+    h("label", { class: "check" }, downgrade, "Allow downgrades"),
+    graceField,
+    tenureField,
+    h("button", { class: "btn primary", type: "submit" }, "Save policy"));
+
+  const table = h("div", { class: "table-wrap" }, h("table", {},
+    h("thead", {}, h("tr", {}, h("th", {}, "On"), h("th", { class: "num" }, "Rank"), h("th", {}, "Level"), h("th", {}, "Requires"), h("th", {}, "Linked tier"), h("th", {}))),
+    h("tbody", {}, levels.map((l) => h("tr", {},
+      h("td", {}, toggle(l.is_active, (on) => setLevelStatus(l, on), "Toggle level " + l.name)),
+      h("td", { class: "num" }, fmtNum(l.rank)),
+      h("td", {}, h("div", {}, l.name), h("div", { class: "muted mono" }, l.slug)),
+      h("td", {}, levelRequirements(l) || h("span", { class: "muted" }, "nothing")),
+      h("td", {}, tierName(l.tier_id) || h("span", { class: "muted" }, "—")),
+      h("td", {}, h("div", { class: "actions" },
+        h("button", { class: "btn small", onclick: () => openForm({ title: `Edit level "${l.name}"`, fields: levelFields(l),
+          onSubmit: async (v) => { await api("PATCH", `/admin/levels/${l.id}`, levelBody(v)); toast("Level saved"); refresh(); } }) }, "Edit"),
+        h("button", { class: "btn small danger", onclick: () => confirmDanger("Delete level", `Delete level "${l.name}"? Entities on it lose it until they're re-evaluated. Level history is kept.`, "Delete",
+          async () => { await api("DELETE", `/admin/levels/${l.id}`); toast("Level deleted"); refresh(); }) }, "Delete"))))))));
+
+  const reevalBtn = h("button", { class: "btn small", title: "Apply the current thresholds and policy to every profile now" }, "Re-evaluate all");
+  reevalBtn.addEventListener("click", () => reevaluate(reevalBtn));
+
+  main.replaceChildren(h("div", { class: "split" },
+    h("div", { class: "panel" }, h("div", { class: "panel-head" }, h("h3", {}, "Level policy")), policyForm),
+    h("div", { class: "panel" },
+      h("div", { class: "panel-head" }, h("h3", {}, "Levels"), h("span", { class: "muted" }, "lowest rank first"), h("span", { class: "spacer" }), reevalBtn,
+        h("button", { class: "btn small primary", onclick: () => openForm({ title: "New level", fields: levelFields({ rank: nextRank }), submitLabel: "Create",
+          onSubmit: async (v) => { await api("POST", "/admin/levels", levelBody(v)); toast("Level created"); refresh(); } }) }, "+ New level")),
+      h("div", { class: "panel-body muted", style: "padding-bottom:0" },
+        "An entity holds the highest-ranked level whose every requirement it meets. Points requirements count points earned, not the balance, so redeeming never costs an entity its level. Upgrades apply instantly."),
+      levels.length ? table : h("div", { class: "empty" }, "No levels yet. Create one such as Silver or Gold."))));
+}
+
+// showProfile shows an entity's balances, upcoming expirations and level history.
+async function showProfile(entity) {
+  const path = "/data/profiles/" + encodeURIComponent(entity);
+  const [{ data: p }, { data: exp }, { data: hist }] = await Promise.all([
+    api("GET", path), api("GET", path + "/expirations"), api("GET", path + "/level-history?limit=100")]);
+  const dlg = $("#dialog");
+  const name = (slug) => slug || h("span", { class: "muted" }, "none");
+  const table = (head, rows) => h("div", { class: "table-wrap" }, h("table", {}, h("thead", {}, h("tr", {}, head)), h("tbody", {}, rows)));
+  const section = (title, rows, render, emptyText) => h("div", {}, h("h3", { style: "margin-bottom:6px" }, title),
+    rows.length ? render(rows) : h("div", { class: "empty", style: "padding:12px" }, emptyText));
+  dlg.style.width = "min(760px, calc(100vw - 32px))";
+  dlg.replaceChildren(h("div", {},
+    h("div", { class: "panel-head" }, h("h3", {}, "Profile"), h("span", { class: "muted mono" }, entity), p.level_slug ? h("span", { class: "badge" }, p.level_slug) : null),
+    h("div", { class: "panel-body stack" },
+      h("div", { class: "muted" }, `Spend ${fmtNum(p.qualifying_spend)} qualifying, ${fmtNum(p.lifetime_spend)} lifetime · `,
+        `Orders ${fmtNum(p.qualifying_orders)} qualifying, ${fmtNum(p.lifetime_orders)} lifetime`),
+      section("Balances", orderedBalances(p.balances), (rows) => table(
+        [h("th", {}, "Point type"), h("th", { class: "num" }, "Balance"), h("th", { class: "num" }, "Lifetime earned"), h("th", { class: "num", title: "Earned within the level policy's window" }, "Qualifying earned")],
+        rows.map(([slug, b]) => h("tr", {}, h("td", { class: "mono" }, slug), h("td", { class: "num" }, h("strong", {}, fmtNum(b.balance))),
+          h("td", { class: "num" }, fmtNum(b.lifetime_earned)), h("td", { class: "num" }, fmtNum(b.qualifying_earned))))), "No balances yet."),
+      section("Upcoming expirations", exp.data, (rows) => table(
+        [h("th", {}, "Expires"), h("th", {}, "Point type"), h("th", { class: "num" }, "Amount")],
+        rows.map((x) => h("tr", {}, h("td", { class: "muted", style: "white-space:nowrap" }, fmtTime(x.expires_at)), h("td", { class: "mono" }, x.point_type),
+          h("td", { class: "num" }, fmtNum(x.amount))))), "Nothing is due to expire."),
+      section("Level history", hist.data, (rows) => table(
+        [h("th", {}, "Time"), h("th", {}, "Change"), h("th", { class: "num" }, "Qualifying spend"), h("th", { class: "num" }, "Orders"), h("th", {}, "Points earned")],
+        rows.map((c) => h("tr", {},
+          h("td", { class: "muted", style: "white-space:nowrap" }, fmtTime(c.created_at)),
+          h("td", {}, h("span", { class: c.direction === "up" ? "pos" : "neg" }, c.direction === "up" ? "▲ " : "▼ "), name(c.from_level), " → ", h("strong", {}, name(c.to_level))),
+          h("td", { class: "num" }, fmtNum(c.qualifying_spend)),
+          h("td", { class: "num" }, fmtNum(c.qualifying_orders ?? 0)),
+          h("td", { class: "muted" }, balancesText(c.qualifying_points) || "—")))), "No level changes yet.")),
+    h("footer", {},
+      h("button", { class: "btn", type: "button", onclick: () => { dlg.close(); state.logFilters = { entity_id: entity }; go("logs"); } }, "View ledger"),
+      h("button", { class: "btn primary", type: "button", onclick: () => dlg.close() }, "Done"))));
+  dlg.showModal();
+}
+
+// ---------- Profiles ----------
+async function renderProfiles(main) {
+  const [, , { data: levelsData }] = await Promise.all([loadTiers(), loadPointTypes(), api("GET", "/admin/levels")]);
+  const tierSel = h("select", { name: "tier" }, h("option", { value: "" }, "All tiers"), state.tiers.map((t) => h("option", { value: t.slug }, t.name)));
+  const levelSel = h("select", { name: "level" }, h("option", { value: "" }, "All levels"), levelsData.data.map((l) => h("option", { value: l.slug }, l.name)));
+  const lookup = h("input", { placeholder: state.arch || "entity id" });
+  const tbody = h("tbody");
+  const more = h("button", { class: "btn hidden" }, "Load more");
+  const empty = h("div", { class: "empty hidden" }, "No profiles yet. Profiles are created on an entity's first transaction.");
+  let cursor = null;
+
+  const openLogs = (entity) => { state.logFilters = { entity_id: entity }; go("logs"); };
+  const details = (entity) => showProfile(entity).catch((err) => toast(err.status === 404 ? `No profile for "${entity}"` : errMsg(err), true));
+  async function load(reset) {
+    if (reset) { tbody.replaceChildren(); cursor = null; }
+    const { data } = await api("GET", "/data/profiles" + qs({ tier: tierSel.value, level: levelSel.value, cursor, limit: 50 }));
+    for (const p of data.data) {
+      const atRisk = p.below_level_since ? h("span", { class: "badge warn", title: "No longer meets this level's threshold since " + fmtTime(p.below_level_since) }, "at risk") : null;
+      tbody.append(h("tr", { class: "clickable", onclick: () => openLogs(p.entity_id), title: "View ledger" },
+        h("td", { class: "mono" }, p.entity_id),
+        h("td", { style: "white-space:nowrap" }, balancesText(p.balances) || fmtNum(p.balance)),
+        h("td", {}, p.level_slug ? [p.level_slug, " ", atRisk] : h("span", { class: "muted" }, "—")),
+        h("td", { class: "num", title: `Lifetime spend ${fmtNum(p.lifetime_spend)}` }, fmtNum(p.qualifying_spend)),
+        h("td", { class: "num", title: `Lifetime orders ${fmtNum(p.lifetime_orders)}` }, fmtNum(p.qualifying_orders)),
+        h("td", {}, p.tier_slug || h("span", { class: "muted" }, "—")),
+        h("td", { class: "muted" }, fmtTime(p.updated_at)),
+        h("td", {}, h("div", { class: "actions" }, h("button", { class: "btn small", title: "Balances, expirations and level history", onclick: (e) => { e.stopPropagation(); details(p.entity_id); } }, "Details")))));
+    }
+    cursor = data.next_cursor;
+    more.classList.toggle("hidden", !cursor);
+    empty.classList.toggle("hidden", tbody.children.length > 0);
+  }
+  tierSel.addEventListener("change", () => load(true).catch((e) => toast(errMsg(e), true)));
+  levelSel.addEventListener("change", () => load(true).catch((e) => toast(errMsg(e), true)));
+  more.addEventListener("click", () => load(false).catch((e) => toast(errMsg(e), true)));
+
+  const lookupForm = h("form", { style: "display:flex;gap:8px", onsubmit: async (e) => {
+    e.preventDefault();
+    const id = lookup.value.trim();
+    if (!id) return;
+    await details(id);
+  } }, lookup, h("button", { class: "btn", type: "submit" }, "Find"));
+
+  main.replaceChildren(h("div", { class: "panel" },
+    h("div", { class: "panel-head" }, h("h3", {}, "Profiles"), h("span", { class: "muted" }, state.arch ? `keyed by ${state.arch}` : ""), h("span", { class: "spacer" }),
+      h("div", { style: "width:150px" }, levelSel), h("div", { style: "width:150px" }, tierSel), lookupForm),
+    h("div", { class: "table-wrap" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, state.arch || "Entity"), h("th", {}, "Balances"), h("th", {}, "Level"), h("th", { class: "num", title: "Spend counted toward the level under the current policy" }, "Qualifying spend"),
+        h("th", { class: "num", title: "Orders counted toward the level under the current policy" }, "Orders"), h("th", {}, "Last tier"), h("th", {}, "Last activity"), h("th", {}))),
+      tbody)),
+    empty, h("div", { class: "panel-body", style: "text-align:center" }, more)));
+  await load(true);
+}
+
+// ---------- Ledger ----------
+async function renderLogs(main) {
+  await Promise.all([loadTiers(), loadPointTypes()]);
+  const f = state.logFilters;
+  const input = (name, attrs = {}) => h("input", { name, value: f[name] || "", ...attrs });
+  // datetime-local inputs take local wall-clock time without a zone suffix.
+  const toLocal = (iso) => { if (!iso) return ""; const d = new Date(iso); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
+  const controls = {
+    entity_id: input("entity_id", { placeholder: state.arch || "entity id" }),
+    tier: h("select", { name: "tier" }, h("option", { value: "" }, "Any"), state.tiers.map((t) => h("option", { value: t.slug, selected: f.tier === t.slug }, t.name))),
+    rule: input("rule", { placeholder: "rule slug" }),
+    entry_type: h("select", { name: "entry_type" }, [["", "Any"], ["rule", "Rule"], ["adjustment", "Adjustment"], ["expiry", "Expiry"]].map(([v, l]) => h("option", { value: v, selected: f.entry_type === v }, l))),
+    point_type: h("select", { name: "point_type" }, h("option", { value: "" }, "Any"), state.pointTypes.map((t) => h("option", { value: t.slug, selected: f.point_type === t.slug }, t.name))),
+    from: h("input", { type: "datetime-local", value: toLocal(f.from) }),
+    to: h("input", { type: "datetime-local", value: toLocal(f.to) }),
+  };
+  const field = (label, el) => h("label", { class: "field" }, h("span", {}, label), el);
+
+  const tbody = h("tbody");
+  const more = h("button", { class: "btn hidden" }, "Load more");
+  const empty = h("div", { class: "empty hidden" }, "No ledger entries match.");
+  let cursor = null;
+
+  function readFilters() {
+    const iso = (el) => el.value ? new Date(el.value).toISOString() : "";
+    state.logFilters = {
+      entity_id: controls.entity_id.value.trim(), tier: controls.tier.value, rule: controls.rule.value.trim(),
+      entry_type: controls.entry_type.value, point_type: controls.point_type.value, from: iso(controls.from), to: iso(controls.to),
+    };
+  }
+  async function load(reset) {
+    if (reset) { tbody.replaceChildren(); cursor = null; }
+    const { data } = await api("GET", "/data/logs" + qs({ ...state.logFilters, cursor, limit: 100 }));
+    for (const e of data.data) {
+      const source = e.entry_type === "adjustment" ? h("span", { class: "badge warn" }, "adjustment") :
+        e.entry_type === "expiry" ? h("span", { class: "badge", title: "Points that reached their expiry date" }, "expiry") :
+        h("span", {}, e.tier, " / ", h("span", { class: "mono" }, e.rule));
+      tbody.append(h("tr", {},
+        h("td", { class: "muted", style: "white-space:nowrap" }, fmtTime(e.created_at)),
+        h("td", { class: "mono" }, e.entity_id),
+        h("td", {}, source),
+        h("td", { class: "num" }, lineList(e.lines)),
+        h("td", { class: "num" }, e.spend ? signed(e.spend) : h("span", { class: "muted" }, "—")),
+        h("td", { class: "num" }, e.orders ? signed(e.orders) : h("span", { class: "muted" }, "—")),
+        h("td", { class: "muted" }, e.amount != null ? [h("span", { class: "badge", title: "Amount supplied with the execute call" }, "amount " + fmtNum(e.amount)), " "] : null,
+          e.reason || (e.idempotency_key ? h("span", { class: "mono", title: "Idempotency key" }, e.idempotency_key) : ""))));
+    }
+    cursor = data.next_cursor;
+    more.classList.toggle("hidden", !cursor);
+    empty.classList.toggle("hidden", tbody.children.length > 0);
+  }
+  more.addEventListener("click", () => load(false).catch((e) => toast(errMsg(e), true)));
+
+  const filterForm = h("form", { class: "panel-body", onsubmit: (e) => { e.preventDefault(); readFilters(); load(true).catch((err) => toast(errMsg(err), true)); } },
+    h("div", { class: "filters" },
+      field(state.arch || "Entity", controls.entity_id), field("Tier", controls.tier), field("Rule", controls.rule),
+      field("Type", controls.entry_type), field("Point type", controls.point_type), field("From", controls.from), field("To", controls.to)),
+    h("div", { style: "display:flex;gap:8px" }, h("button", { class: "btn primary", type: "submit" }, "Apply filters"),
+      h("button", { class: "btn", type: "button", onclick: () => { state.logFilters = {}; go("logs"); } }, "Clear")));
+
+  main.replaceChildren(h("div", { class: "panel" },
+    h("div", { class: "panel-head" }, h("h3", {}, "Ledger"), h("span", { class: "muted" }, "Append-only audit trail, newest first")),
+    filterForm,
+    h("div", { class: "table-wrap" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "Time"), h("th", {}, state.arch || "Entity"), h("th", {}, "Tier / rule"), h("th", { class: "num" }, "Points (balance)"), h("th", { class: "num" }, "Spend"), h("th", { class: "num" }, "Orders"), h("th", {}, "Note"))),
+      tbody)),
+    empty, h("div", { class: "panel-body", style: "text-align:center" }, more)));
+  await load(true);
+}
+
+// ---------- Test & adjust ----------
+async function renderPlayground(main) {
+  await Promise.all([loadTiers(), loadPointTypes()]);
+  const output = h("pre", { class: "json" }, "Responses appear here.");
+  // summary highlights what a ledger entry response moved; the raw JSON follows it.
+  const summary = h("div", { class: "hidden", style: "margin-bottom:12px" });
+  const show = (status, data) => {
+    output.textContent = `HTTP ${status}\n` + JSON.stringify(data, null, 2);
+    const lc = data && data.level_change;
+    summary.classList.toggle("hidden", !(data && data.lines));
+    if (data && data.lines) summary.replaceChildren(lineList(data.lines),
+      h("div", { class: "muted", style: "margin-top:6px" }, [
+        data.replayed ? "Idempotent replay" : null,
+        data.orders ? `Orders ${data.orders > 0 ? "+" : ""}${data.orders}` : null,
+        data.amount != null ? `Amount ${fmtNum(data.amount)}` : null,
+        data.streak ? `Streak day ${data.streak.days}` : null,
+        lc ? `Level ${lc.from_level || "none"} → ${lc.to_level || "none"}` : null,
+      ].filter(Boolean).join(" · ")));
+  };
+  const run = async (fn) => {
+    try { const r = await fn(); show(r.status, r.data); }
+    catch (e) { show(e.status || "error", { error: { code: e.code, message: e.message } }); }
+  };
+  const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+
+  // Execute form
+  const tierSel = h("select", {}, state.tiers.map((t) => h("option", { value: t.id }, t.name + (t.is_active ? "" : " (inactive)"))),
+    h("option", { value: "" }, "From entity's level"));
+  const ruleSel = h("select", { required: true });
+  // With the tier taken from the level, any rule slug may apply, so offer every slug.
+  const ruleSlugInput = h("input", { placeholder: "rule slug", class: "hidden" });
+  const loadRules = async () => {
+    ruleSel.replaceChildren();
+    const fromLevel = !tierSel.value;
+    ruleSel.classList.toggle("hidden", fromLevel);
+    ruleSel.required = !fromLevel;
+    ruleSlugInput.classList.toggle("hidden", !fromLevel);
+    ruleSlugInput.required = fromLevel;
+    if (fromLevel) return;
+    const { data } = await api("GET", `/admin/tiers/${tierSel.value}/rules`);
+    for (const r of data.data) ruleSel.append(h("option", { value: r.slug }, `${r.name} (${effectsSummary(r)})${r.is_active ? "" : " – disabled"}`));
+  };
+  tierSel.addEventListener("change", () => loadRules().catch((e) => toast(errMsg(e), true)));
+  const entity = h("input", { required: true, placeholder: "user123" });
+  const idem = h("input", { placeholder: "optional" });
+  const spend = h("input", { type: "number", step: "1", placeholder: "optional, e.g. 125000" });
+  const amount = h("input", { type: "number", step: "1", min: 1, placeholder: "optional, e.g. 500" });
+  const execForm = h("form", { class: "panel-body", onsubmit: (e) => {
+    e.preventDefault();
+    const tier = state.tiers.find((t) => t.id === tierSel.value);
+    const body = { entity_id: entity.value.trim(), rule: tier ? ruleSel.value : ruleSlugInput.value.trim() };
+    if (tier) body.tier = tier.slug;
+    if (spend.value !== "") body.spend = parseInt(spend.value, 10);
+    if (amount.value !== "") body.amount = parseInt(amount.value, 10);
+    if (idem.value.trim()) body.idempotency_key = idem.value.trim();
+    run(() => api("POST", "/engine/execute", body));
+  } },
+    !state.arch ? h("div", { class: "callout", style: "margin-bottom:12px" }, "Set the entity key in Settings before executing rules.") : null,
+    h("label", { class: "field" }, h("span", {}, state.arch || "Entity ID"), entity),
+    h("div", { class: "grid2" }, h("label", { class: "field" }, h("span", {}, "Tier"), tierSel), h("label", { class: "field" }, h("span", {}, "Rule"), ruleSel, ruleSlugInput)),
+    h("label", { class: "field" }, h("span", {}, "Spend"), spend,
+      h("small", {}, "Order value in your smallest currency unit; counts toward levels and per-spend effects. Negative for a refund.")),
+    h("label", { class: "field" }, h("span", {}, "Amount"), amount,
+      h("small", {}, "For rules with an amount-from-request effect, e.g. coins to redeem at checkout.")),
+    h("label", { class: "field" }, h("span", {}, "Idempotency key"),
+      h("div", { style: "display:flex;gap:8px" }, idem, h("button", { class: "btn", type: "button", onclick: () => { idem.value = newKey(); } }, "Generate")),
+      h("small", {}, "Resubmitting with the same key replays the original result instead of crediting twice.")),
+    h("button", { class: "btn primary", type: "submit", disabled: !state.tiers.length }, "Execute"));
+
+  // Adjustment form
+  const adjEntity = h("input", { required: true, placeholder: "user123" });
+  const adjPoints = h("input", { type: "number", step: "1", placeholder: "-50" });
+  const adjType = h("select", {}, state.pointTypes.map((t) => h("option", { value: t.slug, selected: t.is_primary }, t.name)));
+  const adjSpend = h("input", { type: "number", step: "1", placeholder: "0" });
+  const adjOrders = h("input", { type: "number", step: "1", placeholder: "0" });
+  const adjReason = h("input", { required: true, placeholder: "Refund for order #1234" });
+  const adjForm = h("form", { class: "panel-body", onsubmit: (e) => {
+    e.preventDefault();
+    run(() => api("POST", "/admin/adjustments", {
+      entity_id: adjEntity.value.trim(), point_type: adjType.value, points: parseInt(adjPoints.value || "0", 10),
+      spend: parseInt(adjSpend.value || "0", 10), orders: parseInt(adjOrders.value || "0", 10), reason: adjReason.value.trim(), idempotency_key: newKey(),
+    }));
+  } },
+    h("p", { class: "muted", style: "margin-top:0" }, "The ledger is append-only. Correct a balance, spend or order count by recording a compensating entry."),
+    h("label", { class: "field" }, h("span", {}, state.arch || "Entity ID"), adjEntity),
+    h("div", { class: "grid2" }, h("label", { class: "field" }, h("span", {}, "Points (±)"), adjPoints), h("label", { class: "field" }, h("span", {}, "Point type"), adjType)),
+    h("div", { class: "grid2" }, h("label", { class: "field" }, h("span", {}, "Spend (±)"), adjSpend), h("label", { class: "field" }, h("span", {}, "Orders (±)"), adjOrders)),
+    h("label", { class: "field" }, h("span", {}, "Reason"), adjReason),
+    h("button", { class: "btn primary", type: "submit" }, "Record adjustment"));
+
+  main.replaceChildren(h("div", { class: "split", style: "grid-template-columns:minmax(300px,440px) 1fr" },
+    h("div", { class: "stack" },
+      h("div", { class: "panel" }, h("div", { class: "panel-head" }, h("h3", {}, "Execute a rule")), state.tiers.length ? execForm : h("div", { class: "empty" }, "Create a tier and rule first.")),
+      h("div", { class: "panel" }, h("div", { class: "panel-head" }, h("h3", {}, "Manual adjustment")), adjForm)),
+    h("div", { class: "panel" }, h("div", { class: "panel-head" }, h("h3", {}, "Response")), h("div", { class: "panel-body" }, summary, output))));
+  await loadRules();
+}
+
+// ---------- Settings ----------
+function integrationPanel() {
+  const ep = (method, path, desc) => h("tr", {}, h("td", { class: "mono", style: "white-space:nowrap" }, method), h("td", { class: "mono" }, path), h("td", { class: "muted" }, desc));
+  return h("div", { class: "panel" },
+    h("div", { class: "panel-head" }, h("h3", {}, "API endpoints for your app")),
+    h("div", { class: "panel-body", style: "padding-bottom:0" },
+      h("p", { class: "muted", style: "margin-top:0" },
+        `Base URL ${apiBase()}. Authenticate every request with "Authorization: Bearer <API key>". `,
+        "There's one execute endpoint for all rules: pick the rule with the tier and rule slugs in the body. Each rule's API button shows a ready-made request.")),
+    h("div", { class: "table-wrap" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "Method"), h("th", {}, "Path"), h("th", {}, "Use"))),
+      h("tbody", {},
+        ep("POST", "/engine/execute", `Trigger a rule: { "${state.arch || "entity_id"}", "tier", "rule", "spend", "amount", "idempotency_key" }. tier is optional when the user's level links one; amount is for rules that take one`),
+        ep("GET", "/data/profiles/{id}", "A user's balances per point type, level, spend and orders"),
+        ep("GET", "/data/profiles/{id}/expirations", "A user's points that are due to expire, soonest first"),
+        ep("GET", "/data/profiles/{id}/level-history", "A user's level changes"),
+        ep("GET", "/data/profiles/{id}/logs", "A user's point history (paginated, ?point_type=)"),
+        ep("GET", "/data/profiles", "All profiles (paginated, ?tier=&level=)"),
+        ep("GET", "/data/logs", "Ledger, filterable by ?from=&to=&tier=&rule=&entity_id=&entry_type=&point_type="),
+        ep("POST", "/admin/adjustments", "Manual correction: { entity_id, point_type, points, spend, orders, reason }")))));
+}
+
+async function renderSettings(main) {
+  const [{ data: keysData }, { data: settings }] = await Promise.all([api("GET", "/admin/api-keys"), api("GET", "/admin/settings")]);
+  const refresh = () => renderSettings(main).catch((e) => toast(errMsg(e), true));
+
+  const archInput = h("input", { value: state.arch || "", placeholder: "user_id", required: true });
+  const archForm = h("form", { class: "panel-body", onsubmit: async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await api("POST", "/admin/architecture", { key: archInput.value.trim() });
+      state.arch = data.architecture_key; renderArch(); toast("Entity key saved");
+    } catch (err) { toast(errMsg(err), true); }
+  } },
+    h("p", { class: "muted", style: "margin-top:0" }, "The identifier your platform attaches points to, e.g. user_id, wallet_address or device_id. It can't be changed once profiles exist."),
+    h("label", { class: "field" }, h("span", {}, "Architecture key"), archInput),
+    h("button", { class: "btn primary", type: "submit" }, "Save"));
+
+  // Suggest IANA zone names where the browser can list them; any valid name is accepted.
+  const zones = Intl.supportedValuesOf ? Intl.supportedValuesOf("timeZone") : [];
+  const tzInput = h("input", { value: settings.timezone, placeholder: "Asia/Dhaka", required: true, list: "tz-list", autocomplete: "off" });
+  const tzForm = h("form", { class: "panel-body", onsubmit: async (e) => {
+    e.preventDefault();
+    try { const { data } = await api("PATCH", "/admin/settings", { timezone: tzInput.value.trim() }); tzInput.value = data.timezone; toast("Time zone saved"); }
+    catch (err) { toast(errMsg(err), true); }
+  } },
+    h("p", { class: "muted", style: "margin-top:0" }, `Workspace "${settings.name}". Day, week and month limits, month-end expiry, check-in streak days and calendar level periods follow this time zone.`),
+    h("label", { class: "field" }, h("span", {}, "Time zone"), tzInput, h("datalist", { id: "tz-list" }, zones.map((z) => h("option", { value: z })))),
+    h("button", { class: "btn primary", type: "submit" }, "Save"));
+
+  const active = keysData.data.filter((k) => !k.revoked_at).length;
+  const keysTable = h("div", { class: "table-wrap" }, h("table", {},
+    h("thead", {}, h("tr", {}, h("th", {}, "Name"), h("th", {}, "Key"), h("th", {}, "Created"), h("th", {}, "Status"), h("th", {}))),
+    h("tbody", {}, keysData.data.map((k) => h("tr", {},
+      h("td", {}, k.name || h("span", { class: "muted" }, "—")),
+      h("td", { class: "mono" }, k.prefix + "…"),
+      h("td", { class: "muted" }, fmtTime(k.created_at)),
+      h("td", {}, k.revoked_at ? h("span", { class: "badge off" }, "Revoked") : h("span", { class: "badge on" }, "Active")),
+      h("td", {}, k.revoked_at ? null : h("div", { class: "actions" }, h("button", { class: "btn small danger", disabled: active <= 1, title: active <= 1 ? "Create another key first" : null,
+        onclick: () => confirmDanger("Revoke API key", `Revoke ${k.prefix}…? Requests using it will be rejected immediately.`, "Revoke",
+          async () => { await api("DELETE", `/admin/api-keys/${k.id}`); toast("Key revoked"); refresh(); }) }, "Revoke"))))))));
+
+  main.replaceChildren(h("div", { class: "stack", style: "max-width:860px" },
+    h("div", { class: "panel" }, h("div", { class: "panel-head" }, h("h3", {}, "Entity key")), archForm),
+    h("div", { class: "panel" }, h("div", { class: "panel-head" }, h("h3", {}, "Time zone")), tzForm),
+    integrationPanel(),
+    h("div", { class: "panel" },
+      h("div", { class: "panel-head" }, h("h3", {}, "API keys"), h("span", { class: "spacer" }),
+        h("button", { class: "btn small primary", onclick: () => openForm({ title: "New API key", fields: [{ name: "name", label: "Name", placeholder: "production-backend" }], submitLabel: "Create",
+          onSubmit: async (v) => { const { data } = await api("POST", "/admin/api-keys", v); refresh(); setTimeout(() => showSecret("New API key", data.secret), 0); } }) }, "+ New key")),
+      keysTable)));
+}
+
+// ---------- boot ----------
+$("#nav").addEventListener("click", (e) => { const v = e.target.closest("button")?.dataset.view; if (v) go(v); });
+$("#logout").addEventListener("click", () => logout());
+// Wide dialogs (rule editor, profile details) go back to the default width when closed.
+$("#dialog").addEventListener("close", () => { $("#dialog").style.width = ""; });
+window.addEventListener("hashchange", () => { if (store.key && state.view !== location.hash.slice(1)) go(location.hash.slice(1)); });
+
+$("#login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = $("#login-error");
+  err.classList.add("hidden");
+  try { await connect(e.target.elements.namedItem("key").value.trim()); e.target.reset(); }
+  catch (ex) { err.textContent = ex.status === 401 ? "That API key isn't valid." : errMsg(ex); err.classList.remove("hidden"); }
+});
+
+$("#tenant-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target, el = f.elements, err = $("#tenant-error");
+  err.classList.add("hidden");
+  const body = { name: el.namedItem("name").value.trim() };
+  const arch = el.namedItem("architecture_key").value.trim();
+  if (arch) body.architecture_key = arch;
+  try {
+    const { data } = await api("POST", "/platform/tenants", body, el.namedItem("token").value);
+    const secret = data.api_key.secret;
+    f.reset();
+    await connect(secret);
+    showSecret(`Tenant "${data.tenant.name}" created`, secret, "This is the tenant's API key. It's shown only once. You're now signed in with it.");
+  } catch (ex) { err.textContent = ex.status === 401 ? "Invalid platform admin token." : errMsg(ex); err.classList.remove("hidden"); }
+});
+
+if (store.key) connect(store.key).catch(() => logout());
+else logout();
+</script>
+</body>
+</html>
